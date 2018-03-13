@@ -1,2 +1,2 @@
 # raptor
-Firefox desktop performance framework prototype
+Desktop browser performance framework prototype

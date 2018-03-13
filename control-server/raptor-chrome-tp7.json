@@ -1,0 +1,11 @@
+{
+    "raptor-options": {
+        "type": "tp7",
+        "test_url": "http://localhost:8081/heroes",
+        "page_cycles": 25,
+        "measure": {
+            "fcp": true,
+            "hero": ["mugshot", "title", "anime"]
+        }
+    }
+}

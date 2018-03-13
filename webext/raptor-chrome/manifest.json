@@ -1,0 +1,20 @@
+{
+  "name": "Raptor",
+  "description" : "Performance measurement framework prototype",
+  "version": "0.1",
+  "manifest_version": 2,
+  "background": {
+    "scripts": ["runner.js"]
+  },
+  "content_scripts": [
+    {
+      "matches": ["http://*/tp6/tp6-*.html", "http://*/heroes/*"],
+      "js": ["measure.js"]
+    }
+  ],
+  "permissions": [
+    "http://127.0.0.1:8000/",
+    "tabs",
+    "storage"
+  ]
+}
