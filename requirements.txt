@@ -1,0 +1,5 @@
+mozinfo==0.10
+mozlog==3.7
+mozprofile==0.29
+mozprocess==0.26
+psutil==5.4.3
