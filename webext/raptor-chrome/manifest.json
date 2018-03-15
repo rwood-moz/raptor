@@ -10,6 +10,10 @@
     {
       "matches": ["http://*/tp6/tp6-*.html", "http://*/heroes/*"],
       "js": ["measure.js"]
+    },
+    {
+      "matches": ["http://*/Speedometer/index.html*"],
+      "js": ["benchmark-relay.js"]
     }
   ],
   "permissions": [
