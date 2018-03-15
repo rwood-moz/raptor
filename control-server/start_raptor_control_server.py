@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 # simple local server on port 8000, to demonstrate
 # receiving hero element timing results from a web extension
 

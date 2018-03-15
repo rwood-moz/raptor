@@ -9,11 +9,12 @@
 // note: currently the prototype assumes the test page(s) are
 // already available somewhere independently; so for now locally
 // inside the 'talos-pagesets' dir or 'heros' dir (tarek's github
-// repo) first run:
+// repo) or 'webkit/PerformanceTests' dir (for benchmarks) first run:
 // 'python -m SimpleHTTPServer 8081'
 // to serve out the pages that we want to prototype with. Also
 // update the manifest content 'matches' accordingly
 
+var testType;
 var pageCycles = 0;
 var pageCycle = 0;
 var pageCycleDelay = 1000;
@@ -26,23 +27,35 @@ var isHeroPending = false;
 var pendingHeroes = [];
 var settings = {};
 var isFCPPending = false;
+var isBenchmarkPending = false;
 
-var settingsURL = 'http://localhost:8000/raptor-chrome-tp7.json'
+// for prototype, choose appropriate settings file
+// var settingsURL = 'http://localhost:8000/raptor-chrome-tp7.json'
+var settingsURL = 'http://localhost:8000/raptor-speedometer.json'
 
 function getTestSettings() {
   console.log("getting test settings from control server");
   return new Promise(resolve => {
+
     fetch(settingsURL).then(function(response) {
       response.text().then(function(text) {
         console.log(text);
         settings = JSON.parse(text)['raptor-options'];
+
+        // parse the test settings
+        testType = settings['type'];
         pageCycles = settings['page_cycles'];
         testURL = settings['test_url'];
         results['page'] = testURL;
-        getFCP = settings['measure']['fcp'];
-        if (settings['measure']['hero'].length !== 0) {
-          getHero = true;
+        results['type'] = testType;
+
+        if (testType == 'tp7') {
+          getFCP = settings['measure']['fcp'];
+          if (settings['measure']['hero'].length !== 0) {
+            getHero = true;
+          }
         }
+
         // write options to storage that our content script needs to know
         chrome.storage.local.clear(function() {
           chrome.storage.local.set({settings}, function(){
@@ -87,10 +100,18 @@ function waitForResult() {
   console.log("awaiting results...");
   return new Promise(resolve => {
     function checkForResult() {
-      if (!isHeroPending && !isFCPPending) {
-        resolve();
-      } else {
-        setTimeout(checkForResult, 5);
+      if (testType == 'tp7') {
+        if (!isHeroPending && !isFCPPending) {
+          resolve();
+        } else {
+          setTimeout(checkForResult, 5);
+        }
+      } else if (testType == 'benchmark') {
+        if (!isBenchmarkPending) {
+          resolve();
+        } else {
+          setTimeout(checkForResult, 5);
+        }
       }
     }
     checkForResult();
@@ -102,11 +123,15 @@ function nextCycle() {
   if (pageCycle <= pageCycles) {
     setTimeout(function(){
       console.log("\nbegin pagecycle " + pageCycle);
-      if (getHero)
-        isHeroPending = true;
-        pendingHeroes = Array.from(settings['measure']['hero']);
-      if (getFCP)
-        isFCPPending = true;
+      if (testType == 'tp7') {
+        if (getHero)
+          isHeroPending = true;
+          pendingHeroes = Array.from(settings['measure']['hero']);
+        if (getFCP)
+          isFCPPending = true;
+      } else if (testType == 'benchmark') {
+        isBenchmarkPending = true;
+      }
       // reload the test page
       chrome.tabs.update(testTabID, {url:testURL}, testTabUpdated);
     }, pageCycleDelay);
@@ -120,22 +145,32 @@ function resultListener(request, sender, sendResponse) {
   if (request.type && request.value) {
     console.log("result: " + request.type + " " + request.value);
     sendResponse({text: "confirmed " + request.type});
+
     if (!(request.type in results['measurements']))
       results['measurements'][request.type] = [];
-    if (request.type.indexOf("hero") > -1) {
-      results['measurements'][request.type].push(request.value);
-      var _found = request.type.split('hero:')[1];
-      var index = pendingHeroes.indexOf(_found);
-      if (index > -1) {
-        pendingHeroes.splice(index, 1);
-        if (pendingHeroes.length == 0) {
-          console.log("measured all expected hero elements");
-          isHeroPending = false;
+
+    if (testType == 'tp7') {
+      // a single tp7 pageload measurement was received
+      if (request.type.indexOf("hero") > -1) {
+        results['measurements'][request.type].push(request.value);
+        var _found = request.type.split('hero:')[1];
+        var index = pendingHeroes.indexOf(_found);
+        if (index > -1) {
+          pendingHeroes.splice(index, 1);
+          if (pendingHeroes.length == 0) {
+            console.log("measured all expected hero elements");
+            isHeroPending = false;
+          }
         }
+      } else if (request.type == 'fcp') {
+        results['measurements']['fcp'].push(request.value);
+        isFCPPending = false;
       }
-    } else if (request.type == 'fcp') {
-      results['measurements']['fcp'].push(request.value);
-      isFCPPending = false;
+    } else if (testType == 'benchmark') {
+      // benchmark results received (all results for that complete benchmark run)
+      console.log('received results from benchmark');
+      results['measurements'][request.type].push(request.value);
+      isBenchmarkPending = false;
     }
   } else {
     console.log("unknown message received from content: " + request);
@@ -182,19 +217,29 @@ function cleanUp() {
   // close tab
   chrome.tabs.remove(testTabID);
   console.log("closed tab " + testTabID);
-  // remove listeners
-  chrome.runtime.onMessage.removeListener(resultListener);
-  chrome.tabs.onCreated.removeListener(testTabCreated);
+  if (testType == 'tp7') {
+    // remove listeners
+    chrome.runtime.onMessage.removeListener(resultListener);
+    chrome.tabs.onCreated.removeListener(testTabCreated);
+    console.log("pageloader test finished");
+  } else if (testType == 'benchmark'){
+    console.log('benchmark complete');
+  }
   window.onload = null;
   // done
-  console.log("pageloader test finished");
   return;
 }
 
-function runner(){
-  console.log("pageloader test start");
+function runner() {
   getBrowserInfo().then(function() {
     getTestSettings().then(function() {
+      if (testType == 'benchmark') {
+        // webkit benchmark type of test
+        console.log('benchmark test start');
+      } else if (testType == 'tp7') {
+        // standard 'tp7' pageload test
+        console.log("pageloader test start");
+      }
       // results listener
       chrome.runtime.onMessage.addListener(resultListener);
       // tab creation listener
