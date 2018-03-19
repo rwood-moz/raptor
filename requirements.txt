@@ -1,3 +1,4 @@
+mozcrash==1.0
 mozinfo==0.10
 mozlog==3.7
 mozprofile==0.29

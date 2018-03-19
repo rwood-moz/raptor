@@ -10,6 +10,12 @@
 import BaseHTTPServer
 import json
 import os
+import threading
+
+from mozlog import get_proxy_logger
+
+LOG = get_proxy_logger(component='control_server')
+
 
 class MyHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 
@@ -21,7 +27,7 @@ class MyHandler(BaseHTTPServer.BaseHTTPRequestHandler):
                       'raptor-speedometer.json'];
         head, tail = os.path.split(self.path)
         if tail in validFiles:
-            print('reading test settings from ' + tail)
+            LOG.info('reading test settings from ' + tail)
             try:
                 with open(tail) as json_settings:
                     self.send_header('Access-Control-Allow-Origin', '*')
@@ -29,16 +35,16 @@ class MyHandler(BaseHTTPServer.BaseHTTPRequestHandler):
                     self.end_headers()
                     self.wfile.write(json.dumps(json.load(json_settings)))
                     self.wfile.close()
-                    print('sent test settings to web ext runner')
+                    LOG.info('sent test settings to web ext runner')
             except Exception as ex:
-                print('control server exception')
-                print(ex)
+                LOG.info('control server exception')
+                LOG.info(ex)
         else:
-            print('received request for unknown file: ' + self.path)
+            LOG.info('received request for unknown file: ' + self.path)
 
     def do_POST(self):
         # post handler, received results from web ext runner
-        print "received test results"
+        LOG.info("received test results")
         self.send_response(200)
         self.send_header('Access-Control-Allow-Origin', '*')
         self.send_header('Content-type', 'text/html')
@@ -46,7 +52,7 @@ class MyHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         content_len = int(self.headers.getheader('content-length'))
         post_body = self.rfile.read(content_len)
         data = json.loads(post_body)
-        print data
+        LOG.info(data)
 
     def do_OPTIONS(self):
         self.send_response(200, "ok")
@@ -57,12 +63,16 @@ class MyHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         self.end_headers()
 
 
-def run(server_class=BaseHTTPServer.HTTPServer,
+def start_control_server(server_class=BaseHTTPServer.HTTPServer,
         handler_class=MyHandler):
+    here = os.getcwd()
+    config_dir = os.path.join(here, 'raptor', 'tests')
+    os.chdir(config_dir)
     server_address = ('', 8000)
-    httpd = server_class(server_address, handler_class)
-    print "Raptor control server running on port 8000..."
-    httpd.serve_forever()
 
-if __name__ == "__main__":
-    run()
+    httpd = server_class(server_address, handler_class)
+
+    server = threading.Thread(target=httpd.serve_forever)
+    server.setDaemon(True)  # don't hang on exit
+    server.start()
+    LOG.info("Raptor control server running on port 8000...")
