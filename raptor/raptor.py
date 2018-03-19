@@ -14,6 +14,7 @@ import time
 from mozlog import commandline, get_default_logger
 from mozprofile import Profile, AddonManager
 
+from raptor.control_server import start_control_server
 from raptor.prefs import preferences
 from raptor.browser import start_browser
 
@@ -24,6 +25,7 @@ class Raptor(object):
     def __init__(self):
         self.raptor_venv = os.path.join(os.getcwd(), 'raptor-venv')
         self.log = get_default_logger(component='raptor')
+        self.control_server = None
 
     def create_profile(self):
         self.log.info("Creating browser profile")
@@ -43,11 +45,12 @@ class Raptor(object):
         self.profile.addon_manager.install_addons(addons=addons)
 
     def start_control_server(self):
-        self.log.info("todo: start control server; make this it's own package")
+        self.control_server = start_control_server()
 
     def run_test(self):
         binary = '/Users/rwood/mozilla-unified/obj-x86_64-apple-darwin17.4.0/dist/Nightly.app/Contents/MacOS/firefox'
         start_browser(binary, self.profile.profile)
+
 
     def clean_up(self):
         self.log.info("todo: cleanup here like delete the profile")
@@ -65,6 +68,7 @@ def main(args=sys.argv[1:]):
     raptor.create_profile()
     raptor.set_browser_prefs()
     raptor.install_webext()
+    raptor.start_control_server()
     raptor.run_test()
     raptor.clean_up()
 
