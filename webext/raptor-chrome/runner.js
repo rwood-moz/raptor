@@ -30,8 +30,8 @@ var isFCPPending = false;
 var isBenchmarkPending = false;
 
 // for prototype, choose appropriate settings file
-// var settingsURL = 'http://localhost:8000/raptor-chrome-tp7.json'
-var settingsURL = 'http://localhost:8000/raptor-speedometer.json'
+var settingsURL = 'http://localhost:8000/raptor-chrome-tp7.json'
+// var settingsURL = 'http://localhost:8000/raptor-speedometer.json'
 
 function getTestSettings() {
   console.log("getting test settings from control server");
