@@ -53,6 +53,7 @@ class MyHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         post_body = self.rfile.read(content_len)
         data = json.loads(post_body)
         LOG.info(data)
+        LOG.info("__shutdownBrowser")
 
     def do_OPTIONS(self):
         self.send_response(200, "ok")
