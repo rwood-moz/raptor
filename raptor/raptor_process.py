@@ -70,7 +70,7 @@ class Reader(object):
         self.proc = None
 
     def __call__(self, line):
-        if line.find('__endTimestamp') != -1:
+        if line.find('__raptor_shutdownBrowser') != -1:
             self.got_end_timestamp = True
             self.event.set()
         elif line == 'TART: TIMEOUT':

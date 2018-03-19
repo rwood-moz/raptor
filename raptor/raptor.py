@@ -51,9 +51,11 @@ class Raptor(object):
         binary = '/Users/rwood/mozilla-unified/obj-x86_64-apple-darwin17.4.0/dist/Nightly.app/Contents/MacOS/firefox'
         start_browser(binary, self.profile.profile)
 
+    def process_results(self):
+        self.log.info('todo: process results and dump in PERFHERDER_JSON blob')
 
     def clean_up(self):
-        self.log.info("todo: cleanup here like delete the profile")
+        self.log.info("todo: cleanup here like delete the profile and stop control server")
 
 
 def main(args=sys.argv[1:]):
@@ -70,6 +72,7 @@ def main(args=sys.argv[1:]):
     raptor.install_webext()
     raptor.start_control_server()
     raptor.run_test()
+    raptor.process_results()
     raptor.clean_up()
 
 

@@ -2,9 +2,9 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-// start the 'control server' first, on port 8000, it will provide
-// the test options, as well as receive test results, use:
-// control-server/run_raptor_control_server.py
+// this extension requires a 'control server' to be running on port 8000
+// (see raptor prototype framework). It will provide the test options, as
+// well as receive test results
 
 // note: currently the prototype assumes the test page(s) are
 // already available somewhere independently; so for now locally
@@ -224,7 +224,8 @@ function cleanUp() {
     console.log('benchmark complete');
   }
   window.onload = null;
-  // done
+  // done, dump to console to tell framework to shutdown browser
+  window.dump("\n__raptor_shutdownBrowser\n");
   return;
 }
 
