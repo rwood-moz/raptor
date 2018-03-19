@@ -19,7 +19,7 @@ from mozlog import get_proxy_logger
 from mozprocess import ProcessHandler
 
 
-LOG = get_proxy_logger()
+LOG = get_proxy_logger(component='raptor_process')
 
 class RaptorError(Exception):
     "Errors found while running the talos harness."

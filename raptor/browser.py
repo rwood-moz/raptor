@@ -10,24 +10,47 @@ from mozlog import get_proxy_logger
 from raptor_process import run_browser
 
 
-LOG = get_proxy_logger(component="run_test")
+LOG = get_proxy_logger(component="browser")
 
 
-def start_browser(browser_bin, profile):
-    command_args = [browser_bin, '--profile', profile]
-    minidump_dir = os.getcwd()
-    timeout = 10000
+def start_browser(browser, browser_bin, profile):
+    if browser == 'firefox':
+        command_args = [browser_bin, '--profile', profile.profile]
+        minidump_dir = os.getcwd()
+        timeout = 10000
 
-    LOG.info('Starting test!')
-    LOG.info(command_args)
+        LOG.info('Starting Firefox!')
+        LOG.info(command_args)
 
-    try:
-        pcontext = run_browser(
-            command_args,
-            minidump_dir,
-            timeout=timeout
-        )
-    except Exception:
-        #self.check_for_crashes(browser_config, minidump_dir,
-        #                       test_config['name'])
-        raise
+        try:
+            pcontext = run_browser(
+                command_args,
+                minidump_dir,
+                timeout=timeout
+            )
+        except Exception:
+            #self.check_for_crashes(browser_config, minidump_dir,
+            #                       test_config['name'])
+            raise
+    elif browser == 'chrome':
+        # for chrome, add the --load-extension to the cmd line
+        # temp hard code for now
+        command_args = [browser_bin, '--load-extension=/Users/rwood/raptor/webext/raptor-chrome']
+        minidump_dir = os.getcwd()
+        timeout = 10000
+
+        LOG.info('Starting Google Chrome!')
+        LOG.info(command_args)
+
+        try:
+            pcontext = run_browser(
+                command_args,
+                minidump_dir,
+                timeout=timeout
+            )
+        except Exception:
+            #self.check_for_crashes(browser_config, minidump_dir,
+            #                       test_config['name'])
+            raise
+    else:
+        LOG.critical("abort: unsupported browser")
