@@ -12,45 +12,41 @@ import sys
 import time
 
 from mozlog import commandline, get_default_logger
-from mozprofile import Profile, AddonManager
 
 from raptor.browser import start_browser
 from raptor.cmdline import parse_args
 from raptor.control_server import RaptorControlServer
-from raptor.prefs import preferences
+from raptor.browser_preferences import set_browser_prefs
+from raptor.profile import create_profile
+from raptor.webext import install_webext
 
 
 class Raptor(object):
     """Container class for Raptor"""
 
-    def __init__(self):
+    def __init__(self, options):
         self.raptor_venv = os.path.join(os.getcwd(), 'raptor-venv')
         self.log = get_default_logger(component='raptor')
         self.control_server = None
+        self.profile = None
+        self.browser = options.browser
+        self.browser_path = options.browser_path
 
     def create_profile(self):
-        self.log.info("Creating browser profile")
-        self.profile = Profile()
-        self.log.info(self.profile.profile)
+        self.profile = create_profile(self.browser)
 
     def set_browser_prefs(self):
-        self.log.info("Setting browser preferences")
-        self.profile.set_preferences(preferences)
+        set_browser_prefs(self.browser, self.profile)
 
     def install_webext(self):
-        addons = []
-        here = os.path.abspath(os.getcwd())
-        addons.append(os.path.join(here, 'webext', 'raptor-firefox'))
-        self.log.info("Installing addons:")
-        self.log.info(addons)
-        self.profile.addon_manager.install_addons(addons=addons)
+        install_webext(self.browser, self.profile)
 
     def start_control_server(self):
         self.control_server = RaptorControlServer()
         self.control_server.start()
 
-    def run_test(self, browser_path):
-        start_browser(browser_path, self.profile.profile)
+    def run_test(self):
+        start_browser(self.browser, self.browser_path, self.profile)
 
     def process_results(self):
         self.log.info('todo: process results and dump in PERFHERDER_JSON blob')
@@ -65,18 +61,19 @@ class Raptor(object):
 
 def main(args=sys.argv[1:]):
     args = parse_args()
-    browser = args.browser
-    browser_path = args.browser_path
-
     log = commandline.setup_logging('raptor', args, {'tbpl': sys.stdout})
 
-    raptor = Raptor()
+    raptor = Raptor(options=args)
 
     raptor.create_profile()
     raptor.set_browser_prefs()
-    raptor.install_webext()
+
+    # on firefox we install the ext first; on chrome it's on cmd line
+    if args.browser == 'firefox':
+        raptor.install_webext()
+
     raptor.start_control_server()
-    raptor.run_test(browser_path)
+    raptor.run_test()
     raptor.process_results()
     raptor.clean_up()
 

@@ -14,7 +14,8 @@ def create_parser(mach_interface=False):
     add_arg = parser.add_argument
 
     add_arg('-b', '--browser', required=True, dest="browser",
-            help="name of browser that we are testing ('firefox' or 'chrome')")
+            help="name of browser that we are testing",
+            choices=['firefox', 'chrome'])
     add_arg('-e', '--executablePath', required=True, dest="browser_path",
             help="path to the browser executable that we are testing")
 
