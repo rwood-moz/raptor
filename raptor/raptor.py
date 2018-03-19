@@ -14,9 +14,10 @@ import time
 from mozlog import commandline, get_default_logger
 from mozprofile import Profile, AddonManager
 
+from raptor.browser import start_browser
+from raptor.cmdline import parse_args
 from raptor.control_server import RaptorControlServer
 from raptor.prefs import preferences
-from raptor.browser import start_browser
 
 
 class Raptor(object):
@@ -48,12 +49,12 @@ class Raptor(object):
         self.control_server = RaptorControlServer()
         self.control_server.start()
 
-    def run_test(self):
-        binary = '/Users/rwood/mozilla-unified/obj-x86_64-apple-darwin17.4.0/dist/Nightly.app/Contents/MacOS/firefox'
-        start_browser(binary, self.profile.profile)
+    def run_test(self, browser_path):
+        start_browser(browser_path, self.profile.profile)
 
     def process_results(self):
         self.log.info('todo: process results and dump in PERFHERDER_JSON blob')
+        self.log.info('- or - do we want the control server to do that?')
 
     def clean_up(self):
         self.control_server.stop()
@@ -63,10 +64,10 @@ class Raptor(object):
 
 
 def main(args=sys.argv[1:]):
-    parser = argparse.ArgumentParser()
-    commandline.add_logging_group(parser)
+    args = parse_args()
+    browser = args.browser
+    browser_path = args.browser_path
 
-    args = parser.parse_args()
     log = commandline.setup_logging('raptor', args, {'tbpl': sys.stdout})
 
     raptor = Raptor()
@@ -75,7 +76,7 @@ def main(args=sys.argv[1:]):
     raptor.set_browser_prefs()
     raptor.install_webext()
     raptor.start_control_server()
-    raptor.run_test()
+    raptor.run_test(browser_path)
     raptor.process_results()
     raptor.clean_up()
 
