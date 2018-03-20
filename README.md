@@ -1,3 +1,5 @@
+[![Build Status](https://api.travis-ci.org/rwood-moz/raptor.svg?branch=master)](https://travis-ci.org/rwood-moz/raptor)
+
 # raptor
 Desktop browser performance framework prototype
 
