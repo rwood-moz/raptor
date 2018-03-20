@@ -73,7 +73,6 @@ class Reader(object):
         if line.find('__raptor_shutdownBrowser') != -1:
             self.got_end_timestamp = True
             self.event.set()
-        LOG.process_output(self.proc.pid, line)
         if not (line.startswith('JavaScript error:') or
                 line.startswith('JavaScript warning:')):
             LOG.process_output(self.proc.pid, line)
