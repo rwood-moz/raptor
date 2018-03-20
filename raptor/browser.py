@@ -14,43 +14,32 @@ LOG = get_proxy_logger(component="browser")
 
 
 def start_browser(browser, browser_bin, profile):
+    minidump_dir = os.getcwd()
+    timeout = 10000
+
     if browser == 'firefox':
         command_args = [browser_bin, '--profile', profile.profile]
-        minidump_dir = os.getcwd()
-        timeout = 10000
-
         LOG.info('Starting Firefox!')
         LOG.info(command_args)
-
-        try:
-            pcontext = run_browser(
-                command_args,
-                minidump_dir,
-                timeout=timeout
-            )
-        except Exception:
-            #self.check_for_crashes(browser_config, minidump_dir,
-            #                       test_config['name'])
-            raise
     elif browser == 'chrome':
         # for chrome, add the --load-extension to the cmd line
         # temp hard code for now
-        command_args = [browser_bin, '--load-extension=/Users/rwood/raptor/webext/raptor-chrome']
-        minidump_dir = os.getcwd()
-        timeout = 10000
-
+        command_args = [browser_bin,
+                        '--load-extension=/Users/rwood/raptor/webext/raptor-chrome']
         LOG.info('Starting Google Chrome!')
         LOG.info(command_args)
-
-        try:
-            pcontext = run_browser(
-                command_args,
-                minidump_dir,
-                timeout=timeout
-            )
-        except Exception:
-            #self.check_for_crashes(browser_config, minidump_dir,
-            #                       test_config['name'])
-            raise
     else:
         LOG.critical("abort: unsupported browser")
+
+    # start the browser (and on startup, the webext starts the test)
+    try:
+        pcontext = run_browser(
+            command_args,
+            minidump_dir,
+            timeout=timeout
+        )
+        # framework halts here until browser is shutdown
+    except Exception:
+        #self.check_for_crashes(browser_config, minidump_dir,
+        #                       test_config['name'])
+        raise

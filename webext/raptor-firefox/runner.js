@@ -96,6 +96,7 @@ async function testTabUpdated(tab) {
 
 function waitForResult() {
   console.log("awaiting results...");
+  window.dump("\nawaiting results...");
   return new Promise(resolve => {
     function checkForResult() {
       if (testType == 'tp7') {
@@ -121,6 +122,7 @@ function nextCycle() {
   if (pageCycle <= pageCycles) {
     setTimeout(function(){
       console.log("\nbegin pagecycle " + pageCycle);
+      window.dump("\nbegin pagecycle " + pageCycle);
       if (testType == 'tp7') {
         if (getHero)
           isHeroPending = true;
@@ -182,9 +184,12 @@ function verifyResults() {
     count = results['measurements'][x].length;
     if (count == pageCycles) {
       console.log('have ' + count + ' results for ' + x + ', as expected');
+      window.dump('\nhave ' + count + ' results for ' + x + ', as expected');
     } else {
       console.log('ERROR: expected ' + pageCycles + ' results for '
                   + x + ' but only have ' + count);
+      window.dump('\nERROR: expected ' + pageCycles + ' results for '
+              + x + ' but only have ' + count);
     }
   }
   postResults();
@@ -206,6 +211,7 @@ function postResults() {
   client.setRequestHeader("Content-Type", "application/json");
   if (client.readyState == 1) {
     console.log("posting results...");
+    window.dump("\nposting results...")
     client.send(JSON.stringify(results));
   }
   cleanUp();
