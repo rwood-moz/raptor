@@ -226,8 +226,8 @@ function cleanUp() {
     console.log('benchmark complete');
   }
   window.onload = null;
-  // done, dump to console to tell framework to shutdown browser
-  window.dump("\n__raptor_shutdownBrowser\n");
+  // todo, figure out how to shutdown chrome; in Firefox we can do window.dump here and
+  // raptor_process reader picks that up and kills the browser process; in Chrome can't do dump
   return;
 }
 
