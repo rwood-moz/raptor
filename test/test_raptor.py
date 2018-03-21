@@ -3,11 +3,11 @@ from __future__ import absolute_import, unicode_literals
 import os
 import time
 from argparse import Namespace
-from BaseHTTPServer import HTTPServer
 
 import pytest
 from mozprofile import Profile
 
+from raptor.control_server import RaptorControlServer
 from raptor.raptor import Raptor
 
 
@@ -55,12 +55,11 @@ def test_set_preferences_without_profile(raptor):
     raptor.set_browser_prefs()
 
 
-@pytest.mark.xfail(reason="Control server assumes os.getcwd() is where file lives")
 def test_start_and_stop_server(raptor):
     assert raptor.control_server is None
 
     raptor.start_control_server()
-    assert isinstance(raptor.control_server, HTTPServer)
+    assert isinstance(raptor.control_server, RaptorControlServer)
 
     assert raptor.control_server._server_thread.is_alive()
     raptor.clean_up()

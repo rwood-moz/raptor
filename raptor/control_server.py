@@ -14,6 +14,8 @@ from mozlog import get_proxy_logger
 
 LOG = get_proxy_logger(component='control_server')
 
+here = os.path.abspath(os.path.dirname(__file__))
+
 
 class MyHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 
@@ -70,8 +72,7 @@ class RaptorControlServer():
         self._server_thread = None
 
     def start(self):
-        here = os.getcwd()
-        config_dir = os.path.join(here, 'raptor', 'tests')
+        config_dir = os.path.join(here, 'tests')
         os.chdir(config_dir)
         server_address = ('', 8000)
 
