@@ -40,6 +40,8 @@ class Raptor(object):
         self.profile = create_profile(self.browser)
 
     def set_browser_prefs(self):
+        if not self.profile:
+            self.create_profile()
         set_browser_prefs(self.browser, self.profile)
 
     def gen_test_url(self):

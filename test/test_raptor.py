@@ -51,7 +51,6 @@ def test_set_preferences(raptor):
         assert example_pref in fh.read()
 
 
-@pytest.mark.xfail(reason="NoneType has no attribute 'set_browser_prefs'")
 def test_set_preferences_without_profile(raptor):
     raptor.set_browser_prefs()
 
