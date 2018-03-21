@@ -12,6 +12,8 @@ def create_parser(mach_interface=False):
     parser = argparse.ArgumentParser()
     add_arg = parser.add_argument
 
+    add_arg('-t', '--test', required=True, dest="test",
+            help="name of raptor test to run")
     add_arg('-b', '--browser', required=True, dest="browser",
             help="name of browser that we are testing",
             choices=['firefox', 'chrome'])
