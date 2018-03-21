@@ -1,7 +1,6 @@
 from __future__ import absolute_import, unicode_literals
 
 import os
-import time
 from argparse import Namespace
 
 import pytest
@@ -63,8 +62,6 @@ def test_start_and_stop_server(raptor):
 
     assert raptor.control_server._server_thread.is_alive()
     raptor.clean_up()
-    # XXX using sleep is generally bad, but this is pretty low risk
-    time.sleep(0.1)
     assert not raptor.control_server._server_thread.is_alive()
 
 

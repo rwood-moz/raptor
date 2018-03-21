@@ -90,3 +90,4 @@ class RaptorControlServer():
     def stop(self):
         LOG.info("shutting down control server")
         self.server.shutdown()
+        self._server_thread.join()
