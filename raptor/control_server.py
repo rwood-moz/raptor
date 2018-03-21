@@ -20,16 +20,16 @@ class MyHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     def do_GET(self):
         # get handler, received request for test settings from web ext runner
         self.send_response(200)
-        validFiles = ['raptor-firefox-tp7.json', 
+        validFiles = ['raptor-firefox-tp7.json',
                       'raptor-chrome-tp7.json',
-                      'raptor-speedometer.json'];
+                      'raptor-speedometer.json']
         head, tail = os.path.split(self.path)
         if tail in validFiles:
             LOG.info('reading test settings from ' + tail)
             try:
                 with open(tail) as json_settings:
                     self.send_header('Access-Control-Allow-Origin', '*')
-                    self.send_header('Content-type','application/json')
+                    self.send_header('Content-type', 'application/json')
                     self.end_headers()
                     self.wfile.write(json.dumps(json.load(json_settings)))
                     self.wfile.close()

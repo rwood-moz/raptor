@@ -33,13 +33,13 @@ def start_browser(browser, browser_bin, profile):
 
     # start the browser (and on startup, the webext starts the test)
     try:
-        pcontext = run_browser(
+        run_browser(
             command_args,
             minidump_dir,
             timeout=timeout
         )
         # framework halts here until browser is shutdown
     except Exception:
-        #self.check_for_crashes(browser_config, minidump_dir,
-        #                       test_config['name'])
+        # self.check_for_crashes(browser_config, minidump_dir,
+        #                        test_config['name'])
         raise

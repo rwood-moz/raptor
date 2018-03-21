@@ -6,7 +6,6 @@
 
 from __future__ import absolute_import
 
-import pprint
 import signal
 import time
 import traceback
@@ -21,8 +20,10 @@ from mozprocess import ProcessHandler
 
 LOG = get_proxy_logger(component='raptor_process')
 
+
 class RaptorError(Exception):
     "Errors found while running the talos harness."
+
 
 class ProcessContext(object):
     """
