@@ -6,10 +6,8 @@
 
 from __future__ import absolute_import
 
-import argparse
 import os
 import sys
-import time
 
 from mozlog import commandline, get_default_logger
 
@@ -61,7 +59,7 @@ class Raptor(object):
 
 def main(args=sys.argv[1:]):
     args = parse_args()
-    log = commandline.setup_logging('raptor', args, {'tbpl': sys.stdout})
+    commandline.setup_logging('raptor', args, {'tbpl': sys.stdout})
 
     raptor = Raptor(options=args)
 

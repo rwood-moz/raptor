@@ -6,7 +6,6 @@ from __future__ import absolute_import
 import os
 
 from mozlog import get_proxy_logger
-from mozprofile import AddonManager
 
 LOG = get_proxy_logger(component='webext')
 

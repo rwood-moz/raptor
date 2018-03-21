@@ -1,6 +1,6 @@
-mozcrash==1.0
-mozinfo==0.10
-mozlog==3.7
-mozprofile==0.29
-mozprocess==0.26
+mozcrash
+mozinfo
+mozlog
+mozprofile
+mozprocess
 psutil==5.4.3
