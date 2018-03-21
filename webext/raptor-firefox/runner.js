@@ -14,10 +14,8 @@
 // to serve out the pages that we want to prototype with. Also
 // update the manifest content 'matches' accordingly
 
-// for prototype, choose appropriate settings file
-var settingsURL = 'http://localhost:8000/raptor-firefox-tp7.json';
-// var settingsURL = 'http://localhost:8000/raptor-speedometer.json';
 
+var settingsURL = null;
 var testType;
 var pageCycles = 0;
 var pageCycle = 0;
@@ -236,6 +234,7 @@ function cleanUp() {
 }
 
 function runner() {
+  settingsURL = getSettingsURL();
   getBrowserInfo().then(function() {
     getTestSettings().then(function() {
       if (testType == 'benchmark') {

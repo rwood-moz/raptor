@@ -12,9 +12,10 @@ import sys
 from mozlog import commandline, get_default_logger
 
 from raptor.browser import start_browser
+from raptor.browser_preferences import set_browser_prefs
 from raptor.cmdline import parse_args
 from raptor.control_server import RaptorControlServer
-from raptor.browser_preferences import set_browser_prefs
+from raptor.gen_test_url import gen_test_url
 from raptor.profile import create_profile
 from raptor.webext import install_webext
 
@@ -29,12 +30,20 @@ class Raptor(object):
         self.profile = None
         self.browser = options.browser
         self.browser_path = options.browser_path
+        self.test = options.test
+        self.sysdir = os.path.abspath(os.getcwd())
+
+    def verify_options(self):
+        self.log.info("TODO: Ensure cmd line options are valid before continuing i.e. test exists")
 
     def create_profile(self):
         self.profile = create_profile(self.browser)
 
     def set_browser_prefs(self):
         set_browser_prefs(self.browser, self.profile)
+
+    def gen_test_url(self):
+        gen_test_url(self.browser, self.test, self.sysdir)
 
     def install_webext(self):
         install_webext(self.browser, self.profile)
@@ -63,8 +72,10 @@ def main(args=sys.argv[1:]):
 
     raptor = Raptor(options=args)
 
+    raptor.verify_options()
     raptor.create_profile()
     raptor.set_browser_prefs()
+    raptor.gen_test_url()
 
     # on firefox we install the ext first; on chrome it's on cmd line
     if args.browser == 'firefox':

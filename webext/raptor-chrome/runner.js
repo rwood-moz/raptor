@@ -14,6 +14,7 @@
 // to serve out the pages that we want to prototype with. Also
 // update the manifest content 'matches' accordingly
 
+var settingsURL = null;
 var testType;
 var pageCycles = 0;
 var pageCycle = 0;
@@ -29,9 +30,6 @@ var settings = {};
 var isFCPPending = false;
 var isBenchmarkPending = false;
 
-// for prototype, choose appropriate settings file
-var settingsURL = 'http://localhost:8000/raptor-chrome-tp7.json'
-// var settingsURL = 'http://localhost:8000/raptor-speedometer.json'
 
 function getTestSettings() {
   console.log("getting test settings from control server");
@@ -232,6 +230,7 @@ function cleanUp() {
 }
 
 function runner() {
+  settingsURL = getSettingsURL();
   getBrowserInfo().then(function() {
     getTestSettings().then(function() {
       if (testType == 'benchmark') {

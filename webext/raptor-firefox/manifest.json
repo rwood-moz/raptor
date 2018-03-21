@@ -9,7 +9,7 @@
   "version": "0.1",
   "description": "Performance measurement framework prototype",
   "background": {
-    "scripts": ["runner.js"]
+    "scripts": ["auto_gen_settings_url.js", "runner.js"]
   },
   "content_scripts": [
     {
