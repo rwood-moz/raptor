@@ -1,7 +1,6 @@
 from __future__ import absolute_import, unicode_literals
 
 import os
-from argparse import Namespace
 
 import pytest
 from mozprofile import Profile
@@ -10,26 +9,10 @@ from raptor.control_server import RaptorControlServer
 from raptor.raptor import Raptor
 
 
-@pytest.fixture
-def options():
-    return Namespace(
-        browser='firefox',
-        browser_path='path/to/dummy/browser',
-        test='test_dummy',
-    )
-
-
-@pytest.fixture
-def raptor(options):
-    return Raptor(options)
-
-
 @pytest.mark.parametrize('browser', ['firefox', 'chrome', 'unknown'])
-def test_create_profile(raptor, browser):
-    raptor.browser = browser
-    assert raptor.profile is None
-
-    raptor.create_profile()
+def test_create_profile(options, browser):
+    options.browser = browser
+    raptor = Raptor(options)
     if browser == 'firefox':
         assert isinstance(raptor.profile, Profile)
     else:
@@ -37,21 +20,23 @@ def test_create_profile(raptor, browser):
 
 
 def test_set_preferences(raptor):
-    raptor.create_profile()
+    # This pref is set in mozprofile
+    firefox_pref = 'user_pref("app.update.enabled", false);'
+    # This pref is set in raptor
+    raptor_pref = 'user_pref("security.enable_java", false);'
 
-    example_pref = 'user_pref("app.update.enabled", false);'
     prefs_file = os.path.join(raptor.profile.profile, 'user.js')
     with open(prefs_file, 'r') as fh:
-        assert example_pref not in fh.read()
+        prefs = fh.read()
+        assert firefox_pref in prefs
+        assert raptor_pref not in prefs
 
     raptor.set_browser_prefs()
 
     with open(prefs_file, 'r') as fh:
-        assert example_pref in fh.read()
-
-
-def test_set_preferences_without_profile(raptor):
-    raptor.set_browser_prefs()
+        prefs = fh.read()
+        assert firefox_pref in prefs
+        assert raptor_pref in prefs
 
 
 def test_start_and_stop_server(raptor):
