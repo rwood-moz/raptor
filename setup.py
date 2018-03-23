@@ -19,6 +19,7 @@ setup(name='raptor',
       packages=['raptor'],
       zip_safe=False,
       install_requires=dependencies,
+      include_package_data=True,
       entry_points="""
       # -*- Entry points: -*-
       [console_scripts]

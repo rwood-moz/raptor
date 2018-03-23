@@ -14,6 +14,8 @@ from mozlog import get_proxy_logger
 
 LOG = get_proxy_logger(component='control_server')
 
+here = os.path.abspath(os.path.dirname(__file__))
+
 
 class MyHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 
@@ -67,10 +69,10 @@ class RaptorControlServer():
     def __init__(self):
         self.raptor_venv = os.path.join(os.getcwd(), 'raptor-venv')
         self.server = None
+        self._server_thread = None
 
     def start(self):
-        here = os.getcwd()
-        config_dir = os.path.join(here, 'raptor', 'tests')
+        config_dir = os.path.join(here, 'tests')
         os.chdir(config_dir)
         server_address = ('', 8000)
 
@@ -79,12 +81,13 @@ class RaptorControlServer():
 
         httpd = server_class(server_address, handler_class)
 
-        server = threading.Thread(target=httpd.serve_forever)
-        server.setDaemon(True)  # don't hang on exit
-        server.start()
+        self._server_thread = threading.Thread(target=httpd.serve_forever)
+        self._server_thread.setDaemon(True)  # don't hang on exit
+        self._server_thread.start()
         LOG.info("raptor control server running on port 8000...")
         self.server = httpd
 
     def stop(self):
         LOG.info("shutting down control server")
         self.server.shutdown()
+        self._server_thread.join()
