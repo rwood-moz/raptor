@@ -94,7 +94,6 @@ async function testTabUpdated(tab) {
 
 function waitForResult() {
   console.log("awaiting results...");
-  window.dump("\nawaiting results...");
   return new Promise(resolve => {
     function checkForResult() {
       if (testType == 'tp7') {
@@ -117,10 +116,15 @@ function waitForResult() {
 
 function nextCycle() {
   pageCycle++;
+  if (pageCycle == 1) {
+    var text = "running " + pageCycles + " pagecycles of " + testURL
+    postToControlServer("status", text);
+  }
   if (pageCycle <= pageCycles) {
     setTimeout(function(){
-      console.log("\nbegin pagecycle " + pageCycle);
-      window.dump("\nbegin pagecycle " + pageCycle);
+      var text = "begin pagecycle " + pageCycle;
+      console.log("\n" + text);
+      postToControlServer("status", text);
       if (testType == 'tp7') {
         if (getHero)
           isHeroPending = true;
@@ -182,20 +186,16 @@ function verifyResults() {
     count = results['measurements'][x].length;
     if (count == pageCycles) {
       console.log('have ' + count + ' results for ' + x + ', as expected');
-      window.dump('\nhave ' + count + ' results for ' + x + ', as expected');
     } else {
       console.log('ERROR: expected ' + pageCycles + ' results for '
                   + x + ' but only have ' + count);
-      window.dump('\nERROR: expected ' + pageCycles + ' results for '
-              + x + ' but only have ' + count);
     }
   }
-  postResults();
+  postToControlServer("results", results);
 }
 
-function postResults() {
+function postToControlServer(msgType, msgData) {
   // requires 'control server' running at port 8000 to receive results
-  // run utils/run_local_control_server.py
   var url = "http://127.0.0.1:8000/";
   var client = new XMLHttpRequest();
   client.onreadystatechange = function() {
@@ -208,11 +208,14 @@ function postResults() {
 
   client.setRequestHeader("Content-Type", "application/json");
   if (client.readyState == 1) {
-    console.log("posting results...");
-    window.dump("\nposting results...")
-    client.send(JSON.stringify(results));
+    console.log("posting to control server");
+    var data = { "type": "webext_" + msgType, "data": msgData}
+    client.send(JSON.stringify(data));
   }
-  cleanUp();
+  if (msgType == "results") {
+    // we're finished, move to cleanup
+    cleanUp();
+  }
 }
 
 function cleanUp() {

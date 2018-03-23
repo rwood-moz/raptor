@@ -43,16 +43,16 @@ class MyHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             LOG.info('received request for unknown file: ' + self.path)
 
     def do_POST(self):
-        # post handler, received results from web ext runner
-        LOG.info("received test results")
+        # post handler, received something from webext
         self.send_response(200)
         self.send_header('Access-Control-Allow-Origin', '*')
         self.send_header('Content-type', 'text/html')
         self.end_headers()
         content_len = int(self.headers.getheader('content-length'))
         post_body = self.rfile.read(content_len)
+        # could have received a status update or test results
         data = json.loads(post_body)
-        LOG.info(data)
+        LOG.info("received " + data['type'] + ": " + str(data['data']))
 
     def do_OPTIONS(self):
         self.send_response(200, "ok")
