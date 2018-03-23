@@ -9,7 +9,7 @@ Create a python virtualenv:
     virtualenv .raptor-venv
     source .raptor-venv/bin/activate
 
-Currently raptor is using it's own version of mozbase (with raptor support being added), so you need to manually install the mozbase requirements:
+Currently raptor uses its own special version of mozbase, so manually install the mozbase requirements:
 
     pip install -r mozbase_requirements.txt
 
@@ -36,4 +36,4 @@ To run the test on Google Chrome, use this command line (but use your own binary
 
     raptor -t raptor-chrome-tp7 -b chrome -e "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
 
-Note: Currenlty the prototype doesn't shutdown Google Chrome automatically; so once you see the control server has received and dumped out the results, just manually close Chrome at that point.
+Note: Currently the prototype doesn't shutdown Google Chrome automatically; so once you see the control server has received the results, just manually close Chrome at that point.
