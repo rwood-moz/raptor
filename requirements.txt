@@ -1,7 +1,1 @@
-mozcrash
-mozinfo
-mozlog
-mozprofile
-mozprocess
-moztest
 psutil==5.4.3
