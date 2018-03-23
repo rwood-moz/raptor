@@ -1,0 +1,7 @@
+vendor/mozhttpd
+vendor/mozcrash
+vendor/mozinfo
+vendor/mozlog
+vendor/mozprofile
+vendor/mozprocess
+vendor/moztest
