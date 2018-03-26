@@ -10,29 +10,20 @@ from raptor.raptor import Raptor
 
 
 @pytest.mark.parametrize('browser', ['firefox', 'chrome', 'unknown'])
-def test_create_profile(options, browser):
+def test_create_profile(options, browser, get_prefs):
     options.browser = browser
     raptor = Raptor(options)
-    if browser == 'firefox':
-        assert isinstance(raptor.profile, Profile)
-    else:
+    if browser != 'firefox':
         assert raptor.profile is None
+        return
 
-
-def test_set_preferences(raptor):
+    assert isinstance(raptor.profile, Profile)
     # This pref is set in mozprofile
     firefox_pref = 'user_pref("app.update.enabled", false);'
     # This pref is set in raptor
     raptor_pref = 'user_pref("security.enable_java", false);'
 
     prefs_file = os.path.join(raptor.profile.profile, 'user.js')
-    with open(prefs_file, 'r') as fh:
-        prefs = fh.read()
-        assert firefox_pref in prefs
-        assert raptor_pref not in prefs
-
-    raptor.set_browser_prefs()
-
     with open(prefs_file, 'r') as fh:
         prefs = fh.read()
         assert firefox_pref in prefs

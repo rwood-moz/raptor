@@ -1,3 +1,4 @@
+import json
 import os
 import tempfile
 from argparse import Namespace
@@ -23,6 +24,15 @@ def options(request):
 @pytest.fixture(scope='function')
 def raptor(options):
     return Raptor(options)
+
+
+@pytest.fixture(scope='session')
+def get_prefs():
+    def _inner(browser):
+        import raptor
+        prefs_dir = os.path.join(raptor.__file__, 'preferences')
+        with open(os.path.join(prefs_dir, '{}.json'.format(browser)), 'r') as fh:
+            return json.load(fh)
 
 
 @pytest.fixture

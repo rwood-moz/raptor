@@ -401,6 +401,8 @@ class FirefoxProfile(Profile):
         'focusmanager.testmode': True,
         # Enable test mode to not raise an OS level dialog for location sharing
         'geo.provider.testing': True,
+        # Push idle-daily notifications as far into the future as possible
+        'idle.lastDailyNotification': int(time.time()),
         # Suppress delay for main action in popup notifications
         'security.notification_enable_delay': 0,
         # Suppress automatic safe mode after crashes

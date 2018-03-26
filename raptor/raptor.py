@@ -6,6 +6,7 @@
 
 from __future__ import absolute_import
 
+import json
 import os
 import sys
 
@@ -13,11 +14,12 @@ from mozlog import commandline, get_default_logger
 from mozprofile import create_profile
 
 from raptor.browser import start_browser
-from raptor.browser_preferences import set_browser_prefs
 from raptor.cmdline import parse_args
 from raptor.control_server import RaptorControlServer
 from raptor.gen_test_url import gen_test_url
 from raptor.webext import install_webext
+
+here = os.path.abspath(os.path.dirname(__file__))
 
 
 class Raptor(object):
@@ -33,19 +35,19 @@ class Raptor(object):
         self.test = options.test
         self.sysdir = os.path.abspath(os.getcwd())
 
+        pref_file = os.path.join(here, 'preferences', '{}.json'.format(self.browser))
+        prefs = {}
+        if os.path.isfile(pref_file):
+            with open(pref_file, 'r') as fh:
+                prefs = json.load(fh)
+
         try:
-            self.profile = create_profile(self.browser)
+            self.profile = create_profile(self.browser, preferences=prefs)
         except NotImplementedError:
             self.profile = None
 
     def verify_options(self):
         self.log.info("TODO: Ensure cmd line options are valid before continuing i.e. test exists")
-
-    def set_browser_prefs(self):
-        if self.profile:
-            set_browser_prefs(self.browser, self.profile)
-            return True
-        return False
 
     def gen_test_url(self):
         gen_test_url(self.browser, self.test, self.sysdir)
@@ -66,8 +68,11 @@ class Raptor(object):
 
     def clean_up(self):
         self.control_server.stop()
-        self.log.info("deleting browser profile")
-        del self.profile
+
+        if self.profile:
+            self.log.info("deleting browser profile")
+            del self.profile
+
         self.log.info("done")
 
 
@@ -76,9 +81,7 @@ def main(args=sys.argv[1:]):
     commandline.setup_logging('raptor', args, {'tbpl': sys.stdout})
 
     raptor = Raptor(options=args)
-
     raptor.verify_options()
-    raptor.set_browser_prefs()
     raptor.gen_test_url()
 
     # on firefox we install the ext first; on chrome it's on cmd line
