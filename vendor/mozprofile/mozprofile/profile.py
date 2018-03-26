@@ -18,7 +18,8 @@ from shutil import copytree
 
 __all__ = ['Profile',
            'FirefoxProfile',
-           'ThunderbirdProfile']
+           'ThunderbirdProfile',
+           'create_profile']
 
 
 class Profile(object):
@@ -400,6 +401,8 @@ class FirefoxProfile(Profile):
         'focusmanager.testmode': True,
         # Enable test mode to not raise an OS level dialog for location sharing
         'geo.provider.testing': True,
+        # Push idle-daily notifications as far into the future as possible
+        'idle.lastDailyNotification': int(time.time()),
         # Suppress delay for main action in popup notifications
         'security.notification_enable_delay': 0,
         # Suppress automatic safe mode after crashes
@@ -422,3 +425,18 @@ class ThunderbirdProfile(Profile):
                    # prevents the 'new e-mail address' wizard on new profile
                    'mail.provider.enabled': False,
                    }
+
+
+profile_class = {
+    'firefox': FirefoxProfile,
+    'thunderbird': ThunderbirdProfile,
+}
+
+
+def create_profile(app, **kwargs):
+    cls = profile_class.get(app)
+
+    if not cls:
+        raise NotImplementedError("Profiles not supported for application '{}'".format(app))
+
+    return cls(**kwargs)
