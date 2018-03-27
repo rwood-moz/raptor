@@ -15,10 +15,10 @@ def create_parser(mach_interface=False):
 
     add_arg('-t', '--test', required=True, dest="test",
             help="name of raptor test to run")
-    add_arg('-b', '--browser', required=True, dest="browser",
-            help="name of browser that we are testing",
+    add_arg('--app', default='firefox', dest='app',
+            help="name of the application we are testing (default: firefox)",
             choices=['firefox', 'chrome'])
-    add_arg('-e', '--executablePath', required=True, dest="browser_path",
+    add_arg('-b', '--binary', required=True,
             help="path to the browser executable that we are testing")
 
     add_logging_group(parser)
@@ -28,8 +28,8 @@ def create_parser(mach_interface=False):
 def verify_options(parser, args):
     ctx = vars(args)
 
-    if not os.path.isfile(args.browser_path):
-        parser.error("{browser_path} does not exist!".format(ctx))
+    if not os.path.isfile(args.binary):
+        parser.error("{binary} does not exist!".format(**ctx))
 
 
 def parse_args(argv=None):

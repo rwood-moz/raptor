@@ -25,22 +25,22 @@ here = os.path.abspath(os.path.dirname(__file__))
 class Raptor(object):
     """Container class for Raptor"""
 
-    def __init__(self, options):
+    def __init__(self, app, binary):
         self.raptor_venv = os.path.join(os.getcwd(), 'raptor-venv')
         self.log = get_default_logger(component='raptor')
 
         self.control_server = None
-        self.browser = options.browser
-        self.browser_path = options.browser_path
+        self.app = app
+        self.binary = binary
 
-        pref_file = os.path.join(here, 'preferences', '{}.json'.format(self.browser))
+        pref_file = os.path.join(here, 'preferences', '{}.json'.format(self.app))
         prefs = {}
         if os.path.isfile(pref_file):
             with open(pref_file, 'r') as fh:
                 prefs = json.load(fh)
 
         try:
-            self.profile = create_profile(self.browser, preferences=prefs)
+            self.profile = create_profile(self.app, preferences=prefs)
         except NotImplementedError:
             self.profile = None
 
@@ -49,9 +49,9 @@ class Raptor(object):
         self.control_server.start()
 
     def run_test(self, test):
-        gen_test_url(self.browser, test)
-        install_webext(self.browser, self.profile)
-        start_browser(self.browser, self.browser_path, self.profile)
+        gen_test_url(self.app, test)
+        install_webext(self.app, self.profile)
+        start_browser(self.app, self.binary, self.profile)
 
     def process_results(self):
         self.log.info('todo: process results and dump in PERFHERDER_JSON blob')
@@ -71,7 +71,7 @@ def main(args=sys.argv[1:]):
     args = parse_args()
     commandline.setup_logging('raptor', args, {'tbpl': sys.stdout})
 
-    raptor = Raptor(options=args)
+    raptor = Raptor(args.app, args.binary)
     raptor.start_control_server()
     raptor.run_test(args.test)
     raptor.process_results()
