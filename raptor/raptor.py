@@ -32,8 +32,6 @@ class Raptor(object):
         self.control_server = None
         self.browser = options.browser
         self.browser_path = options.browser_path
-        self.test = options.test
-        self.sysdir = os.path.abspath(os.getcwd())
 
         pref_file = os.path.join(here, 'preferences', '{}.json'.format(self.browser))
         prefs = {}
@@ -46,17 +44,13 @@ class Raptor(object):
         except NotImplementedError:
             self.profile = None
 
-    def gen_test_url(self):
-        gen_test_url(self.browser, self.test, self.sysdir)
-
-    def install_webext(self):
-        install_webext(self.browser, self.profile)
-
     def start_control_server(self):
         self.control_server = RaptorControlServer()
         self.control_server.start()
 
-    def run_test(self):
+    def run_test(self, test):
+        gen_test_url(self.browser, test)
+        install_webext(self.browser, self.profile)
         start_browser(self.browser, self.browser_path, self.profile)
 
     def process_results(self):
@@ -78,14 +72,8 @@ def main(args=sys.argv[1:]):
     commandline.setup_logging('raptor', args, {'tbpl': sys.stdout})
 
     raptor = Raptor(options=args)
-    raptor.gen_test_url()
-
-    # on firefox we install the ext first; on chrome it's on cmd line
-    if args.browser == 'firefox':
-        raptor.install_webext()
-
     raptor.start_control_server()
-    raptor.run_test()
+    raptor.run_test(args.test)
     raptor.process_results()
     raptor.clean_up()
 

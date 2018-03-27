@@ -7,10 +7,12 @@ import os
 from mozlog import get_proxy_logger
 
 
+here = os.path.abspath(os.path.dirname(__file__))
+webext_dir = os.path.join(os.path.dirname(here), 'webext')
 LOG = get_proxy_logger(component="gen_test_url")
 
 
-def gen_test_url(browser, test, sysdir):
+def gen_test_url(browser, test):
     LOG.info("writing test settings url background js, so webext can get it")
 
     data = """
@@ -21,13 +23,11 @@ def gen_test_url(browser, test, sysdir):
     """ % test
 
     if browser == 'firefox':
-        webext_background_script = (os.path.join(sysdir,
-                                                 'webext',
+        webext_background_script = (os.path.join(webext_dir,
                                                  'raptor-firefox',
                                                  'auto_gen_settings_url.js'))
     elif browser == 'chrome':
-        webext_background_script = (os.path.join(sysdir,
-                                                 'webext',
+        webext_background_script = (os.path.join(webext_dir,
                                                  'raptor-chrome',
                                                  'auto_gen_settings_url.js'))
     else:
