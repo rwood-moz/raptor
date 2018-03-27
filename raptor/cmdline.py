@@ -4,6 +4,7 @@
 from __future__ import absolute_import, print_function
 
 import argparse
+import os
 
 from mozlog.commandline import add_logging_group
 
@@ -24,6 +25,15 @@ def create_parser(mach_interface=False):
     return parser
 
 
+def verify_options(parser, args):
+    ctx = vars(args)
+
+    if not os.path.isfile(args.browser_path):
+        parser.error("{browser_path} does not exist!".format(ctx))
+
+
 def parse_args(argv=None):
     parser = create_parser()
-    return parser.parse_args(argv)
+    args = parser.parse_args(argv)
+    verify_options(parser, args)
+    return args

@@ -46,9 +46,6 @@ class Raptor(object):
         except NotImplementedError:
             self.profile = None
 
-    def verify_options(self):
-        self.log.info("TODO: Ensure cmd line options are valid before continuing i.e. test exists")
-
     def gen_test_url(self):
         gen_test_url(self.browser, self.test, self.sysdir)
 
@@ -81,7 +78,6 @@ def main(args=sys.argv[1:]):
     commandline.setup_logging('raptor', args, {'tbpl': sys.stdout})
 
     raptor = Raptor(options=args)
-    raptor.verify_options()
     raptor.gen_test_url()
 
     # on firefox we install the ext first; on chrome it's on cmd line
