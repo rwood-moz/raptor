@@ -7,7 +7,8 @@ import os
 from mozlog import get_proxy_logger
 from raptor_process import run_browser
 
-
+here = os.path.abspath(os.path.dirname(__file__))
+webext_dir = os.path.join(os.path.dirname(here), 'webext')
 LOG = get_proxy_logger(component="browser")
 
 
@@ -23,7 +24,8 @@ def start_browser(browser, browser_bin, profile):
         # for chrome, add the --load-extension to the cmd line
         # temp hard code for now
         command_args = [browser_bin,
-                        '--load-extension=/Users/rwood/raptor/webext/raptor-chrome']
+                        '--load-extension={}'.format(
+                            os.path.join(webext_dir, 'raptor-chrome'))]
         LOG.info('Starting Google Chrome!')
         LOG.info(command_args)
     else:
