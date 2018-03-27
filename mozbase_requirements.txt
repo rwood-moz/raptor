@@ -1,7 +1,8 @@
+vendor/mozlog
 vendor/mozhttpd
 vendor/mozcrash
 vendor/mozinfo
-vendor/mozlog
 vendor/mozprofile
 vendor/mozprocess
+vendor/mozrunner
 vendor/moztest
