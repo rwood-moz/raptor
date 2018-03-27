@@ -1,29 +1,29 @@
 import json
 import os
 import tempfile
-from argparse import Namespace
 
 import pytest
 
 from raptor.raptor import Raptor
 
+here = os.path.abspath(os.path.dirname(__file__))
+
 
 @pytest.fixture(scope='function')
 def options(request):
     opts = {
-        'browser': 'firefox',
-        'browser_path': 'path/to/dummy/browser',
-        'test': 'test_dummy',
+        'app': 'firefox',
+        'binary': 'path/to/dummy/browser',
     }
 
     if hasattr(request.module, 'OPTIONS'):
         opts.update(request.module.OPTIONS)
-    return Namespace(**opts)
+    return opts
 
 
 @pytest.fixture(scope='function')
 def raptor(options):
-    return Raptor(options)
+    return Raptor(**options)
 
 
 @pytest.fixture(scope='session')
@@ -33,6 +33,11 @@ def get_prefs():
         prefs_dir = os.path.join(raptor.__file__, 'preferences')
         with open(os.path.join(prefs_dir, '{}.json'.format(browser)), 'r') as fh:
             return json.load(fh)
+
+
+@pytest.fixture(scope='session')
+def filedir():
+    return os.path.join(here, 'files')
 
 
 @pytest.fixture

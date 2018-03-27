@@ -30,10 +30,10 @@ To share out the test page on localhost.
 
 Then to run the test on Firefox, use this command line (but use your own binary location):
 
-    raptor -t raptor-firefox-tp7 -b firefox -e "/Users/rwood/mozilla-unified/obj-x86_64-apple-darwin17.4.0/dist/Nightly.app/Contents/MacOS/firefox"
+    raptor -t raptor-firefox-tp7 -b "/Users/rwood/mozilla-unified/obj-x86_64-apple-darwin17.4.0/dist/Nightly.app/Contents/MacOS/firefox"
 
 To run the test on Google Chrome, use this command line (but use your own binary location):
 
-    raptor -t raptor-chrome-tp7 -b chrome -e "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+    raptor -t raptor-chrome-tp7 --app chrome -b "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
 
 Note: Currently the prototype doesn't shutdown Google Chrome automatically; so once you see the control server has received the results, just manually close Chrome at that point.

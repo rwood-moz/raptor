@@ -9,11 +9,12 @@ from raptor.control_server import RaptorControlServer
 from raptor.raptor import Raptor
 
 
-@pytest.mark.parametrize('browser', ['firefox', 'chrome', 'unknown'])
-def test_create_profile(options, browser, get_prefs):
-    options.browser = browser
-    raptor = Raptor(options)
-    if browser != 'firefox':
+@pytest.mark.parametrize('app', ['firefox', 'chrome', 'unknown'])
+def test_create_profile(options, app, get_prefs):
+    options['app'] = app
+    raptor = Raptor(**options)
+
+    if app != 'firefox':
         assert raptor.profile is None
         return
 

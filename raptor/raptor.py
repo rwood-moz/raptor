@@ -25,42 +25,33 @@ here = os.path.abspath(os.path.dirname(__file__))
 class Raptor(object):
     """Container class for Raptor"""
 
-    def __init__(self, options):
+    def __init__(self, app, binary):
         self.raptor_venv = os.path.join(os.getcwd(), 'raptor-venv')
         self.log = get_default_logger(component='raptor')
 
         self.control_server = None
-        self.browser = options.browser
-        self.browser_path = options.browser_path
-        self.test = options.test
-        self.sysdir = os.path.abspath(os.getcwd())
+        self.app = app
+        self.binary = binary
 
-        pref_file = os.path.join(here, 'preferences', '{}.json'.format(self.browser))
+        pref_file = os.path.join(here, 'preferences', '{}.json'.format(self.app))
         prefs = {}
         if os.path.isfile(pref_file):
             with open(pref_file, 'r') as fh:
                 prefs = json.load(fh)
 
         try:
-            self.profile = create_profile(self.browser, preferences=prefs)
+            self.profile = create_profile(self.app, preferences=prefs)
         except NotImplementedError:
             self.profile = None
-
-    def verify_options(self):
-        self.log.info("TODO: Ensure cmd line options are valid before continuing i.e. test exists")
-
-    def gen_test_url(self):
-        gen_test_url(self.browser, self.test, self.sysdir)
-
-    def install_webext(self):
-        install_webext(self.browser, self.profile)
 
     def start_control_server(self):
         self.control_server = RaptorControlServer()
         self.control_server.start()
 
-    def run_test(self):
-        start_browser(self.browser, self.browser_path, self.profile)
+    def run_test(self, test):
+        gen_test_url(self.app, test)
+        install_webext(self.app, self.profile)
+        start_browser(self.app, self.binary, self.profile)
 
     def process_results(self):
         self.log.info('todo: process results and dump in PERFHERDER_JSON blob')
@@ -80,16 +71,9 @@ def main(args=sys.argv[1:]):
     args = parse_args()
     commandline.setup_logging('raptor', args, {'tbpl': sys.stdout})
 
-    raptor = Raptor(options=args)
-    raptor.verify_options()
-    raptor.gen_test_url()
-
-    # on firefox we install the ext first; on chrome it's on cmd line
-    if args.browser == 'firefox':
-        raptor.install_webext()
-
+    raptor = Raptor(args.app, args.binary)
     raptor.start_control_server()
-    raptor.run_test()
+    raptor.run_test(args.test)
     raptor.process_results()
     raptor.clean_up()
 
