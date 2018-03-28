@@ -29,6 +29,7 @@ var pendingHeroes = [];
 var settings = {};
 var isFCPPending = false;
 var isBenchmarkPending = false;
+var pageTimeout = 5000; // default pageload timeout
 
 
 function getTestSettings() {
@@ -46,6 +47,11 @@ function getTestSettings() {
         testURL = settings['test_url'];
         results['page'] = testURL;
         results['type'] = testType;
+
+        if (settings['page_timeout'] !== undefined) {
+          pageTimeout = settings['page_timeout'];
+        }
+        console.log("using page timeout (ms): " + pageTimeout);
 
         if (testType == 'tp7') {
           getFCP = settings['measure']['fcp'];
@@ -100,12 +106,14 @@ function waitForResult() {
     function checkForResult() {
       if (testType == 'tp7') {
         if (!isHeroPending && !isFCPPending) {
+          cancelTimeoutAlarm("raptor-page-timeout");
           resolve();
         } else {
           setTimeout(checkForResult, 5);
         }
       } else if (testType == 'benchmark') {
         if (!isBenchmarkPending) {
+          cancelTimeoutAlarm("raptor-page-timeout");
           resolve();
         } else {
           setTimeout(checkForResult, 5);
@@ -127,6 +135,10 @@ function nextCycle() {
       var text = "begin pagecycle " + pageCycle;
       console.log("\n" + text);
       postToControlServer("status", text);
+
+      // set page timeout alarm
+      setTimeoutAlarm("raptor-page-timeout", pageTimeout);
+
       if (testType == 'tp7') {
         if (getHero)
           isHeroPending = true;
@@ -142,6 +154,30 @@ function nextCycle() {
   } else {
     verifyResults();
   }
+}
+
+function timeoutAlarmListener(alarm) {
+  var text = alarm.name;
+  console.error(text);
+  postToControlServer("status", text);
+  // call clean-up to shutdown gracefully
+  cleanUp();
+}
+
+function setTimeoutAlarm(timeoutName, timeoutMS) {
+  var timeout_when = Date.now() + timeoutMS;
+  chrome.alarms.create(timeoutName, { when:timeout_when });
+  console.log("set " + timeoutName);
+}
+
+function cancelTimeoutAlarm(timeoutName) {
+  chrome.alarms.clear(timeoutName, function(wasCleared) {
+    if (wasCleared) {
+      console.log("cancelled " + timeoutName);
+    } else {
+      console.error("failed to clear " + timeoutName);
+    }
+  });
 }
 
 function resultListener(request, sender, sendResponse) {
@@ -229,6 +265,7 @@ function cleanUp() {
     // remove listeners
     chrome.runtime.onMessage.removeListener(resultListener);
     chrome.tabs.onCreated.removeListener(testTabCreated);
+    chrome.alarms.onAlarm.removeListener(timeoutAlarmListener);
     console.log("pageloader test finished");
   } else if (testType == 'benchmark'){
     console.log('benchmark complete');
@@ -254,6 +291,8 @@ function runner() {
       chrome.runtime.onMessage.addListener(resultListener);
       // tab creation listener
       chrome.tabs.onCreated.addListener(testTabCreated);
+      // timeout alarm listener
+      chrome.alarms.onAlarm.addListener(timeoutAlarmListener);
       // create new empty tab, which starts the test
       chrome.tabs.create({url:"about:blank"});
     });
