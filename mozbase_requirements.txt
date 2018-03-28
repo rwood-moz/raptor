@@ -5,4 +5,5 @@ vendor/mozinfo
 vendor/mozprofile
 vendor/mozprocess
 vendor/mozrunner
+vendor/mozinstall
 vendor/moztest

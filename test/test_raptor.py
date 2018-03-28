@@ -42,17 +42,20 @@ def test_start_and_stop_server(raptor):
     assert not raptor.control_server._server_thread.is_alive()
 
 
-@pytest.mark.parametrize('browser', [
-    pytest.mark.xfail('firefox'),
+@pytest.mark.parametrize('app', [
+    'firefox',
     pytest.mark.xfail('chrome'),
 ])
-def test_start_browser(raptor, get_binary, browser):
-    binary = get_binary(browser)
-    raptor.browser = browser
-    raptor.browser_path = binary
-    raptor.create_profile()
-    raptor.set_browser_prefs()
-    raptor.install_webext()
+def test_start_browser(get_binary, app):
+    binary = get_binary(app)
+    assert binary
+
+    raptor = Raptor(app, binary)
     raptor.start_control_server()
-    raptor.run_test()
+
+    # TODO We can't run the browser just yet because there is no
+    # easy way to control the process from a raptor instance. This
+    # will be fixed soon.
+    # test = 'raptor-{}-tp7'.format(app)
+    # raptor.run_test(test)
     raptor.clean_up()

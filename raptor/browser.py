@@ -17,7 +17,7 @@ def start_browser(browser, browser_bin, profile):
     timeout = 10000
 
     if browser == 'firefox':
-        command_args = [browser_bin, '--profile', profile.profile]
+        command_args = [browser_bin, '--profile', profile.profile, '--no-remote']
         LOG.info('Starting Firefox!')
         LOG.info(command_args)
     elif browser == 'chrome':
@@ -33,7 +33,7 @@ def start_browser(browser, browser_bin, profile):
 
     # start the browser (and on startup, the webext starts the test)
     try:
-        run_browser(
+        return run_browser(
             command_args,
             minidump_dir,
             timeout=timeout
