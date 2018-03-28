@@ -1,15 +1,18 @@
 from __future__ import absolute_import, unicode_literals
 
 import os
+import threading
+import time
 
 import pytest
 from mozprofile import Profile
+from mozrunner.errors import RunnerNotStartedError
 
 from raptor.control_server import RaptorControlServer
 from raptor.raptor import Raptor
 
 
-@pytest.mark.parametrize('app', ['firefox', 'chrome', 'unknown'])
+@pytest.mark.parametrize('app', ['firefox', 'chrome'])
 def test_create_profile(options, app, get_prefs):
     options['app'] = app
     raptor = Raptor(**options)
@@ -53,9 +56,22 @@ def test_start_browser(get_binary, app):
     raptor = Raptor(app, binary)
     raptor.start_control_server()
 
-    # TODO We can't run the browser just yet because there is no
-    # easy way to control the process from a raptor instance. This
-    # will be fixed soon.
-    # test = 'raptor-{}-tp7'.format(app)
-    # raptor.run_test(test)
+    test = 'raptor-{}-tp7'.format(app)
+    thread = threading.Thread(target=raptor.run_test, args=(test,))
+    thread.start()
+
+    timeout = time.time() + 5  # seconds
+    while time.time() < timeout:
+        try:
+            is_running = raptor.runner.is_running()
+            assert is_running
+            break
+        except RunnerNotStartedError:
+            time.sleep(0.1)
+    else:
+        assert False  # browser didn't start
+
     raptor.clean_up()
+    thread.join(5)
+    assert not raptor.runner.is_running()
+    assert raptor.runner.returncode is not None
