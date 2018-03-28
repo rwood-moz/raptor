@@ -54,7 +54,7 @@ function getTestSettings() {
         }
         console.log("using page timeout (ms): " + pageTimeout);
 
-        if (testType == 'tp7') {
+        if (testType == 'pageload') {
           getFNBPaint = settings['measure']['fnbpaint'];
           if (settings['measure']['hero'].length !== 0) {
             getHero = true;
@@ -102,7 +102,7 @@ function waitForResult() {
   console.log("awaiting results...");
   return new Promise(resolve => {
     function checkForResult() {
-      if (testType == 'tp7') {
+      if (testType == 'pageload') {
         if (!isHeroPending && !isFNBPaintPending) {
           cancelTimeoutAlarm("raptor-page-timeout");
           resolve();
@@ -137,7 +137,7 @@ function nextCycle() {
       // set page timeout alarm
       setTimeoutAlarm("raptor-page-timeout", pageTimeout);
 
-      if (testType == 'tp7') {
+      if (testType == 'pageload') {
         if (getHero)
           isHeroPending = true;
           pendingHeroes = Array.from(settings['measure']['hero']);
@@ -188,7 +188,7 @@ function resultListener(request, sender, sendResponse) {
     if (!(request.type in results['measurements']))
       results['measurements'][request.type] = [];
 
-    if (testType == 'tp7') {
+    if (testType == 'pageload') {
       // a single tp7 pageload measurement was received
       if (request.type.indexOf("hero") > -1) {
         results['measurements'][request.type].push(request.value);
@@ -259,7 +259,7 @@ function cleanUp() {
   // close tab
   browser.tabs.remove(testTabID);
   console.log("closed tab " + testTabID);
-  if (testType == 'tp7') {
+  if (testType == 'pageload') {
     // remove listeners
     browser.runtime.onMessage.removeListener(resultListener);
     browser.tabs.onCreated.removeListener(testTabCreated);
@@ -281,7 +281,7 @@ function runner() {
       if (testType == 'benchmark') {
         // webkit benchmark type of test
         console.log('benchmark test start');
-      } else if (testType == 'tp7') {
+      } else if (testType == 'pageload') {
         // standard 'tp7' pageload test
         console.log("pageloader test start");
       }

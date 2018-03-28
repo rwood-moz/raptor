@@ -13,7 +13,7 @@ def create_parser(mach_interface=False):
     parser = argparse.ArgumentParser()
     add_arg = parser.add_argument
 
-    add_arg('-t', '--test', required=True, dest="test",
+    add_arg('-t', '--test', default=None, dest="test",
             help="name of raptor test to run")
     add_arg('--app', default='firefox', dest='app',
             help="name of the application we are testing (default: firefox)",

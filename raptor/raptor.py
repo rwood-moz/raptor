@@ -11,6 +11,7 @@ import os
 import sys
 import time
 
+from manifestparser import TestManifest
 from mozlog import commandline, get_default_logger
 from mozprofile import create_profile
 from mozrunner import runners
@@ -19,6 +20,7 @@ from raptor.cmdline import parse_args
 from raptor.control_server import RaptorControlServer
 from raptor.gen_test_url import gen_test_url
 from raptor.outputhandler import OutputHandler
+from raptor.manifest import get_raptor_test_list
 from raptor.webext import install_webext
 
 here = os.path.abspath(os.path.dirname(__file__))
@@ -105,10 +107,21 @@ class Raptor(object):
 def main(args=sys.argv[1:]):
     args = parse_args()
     commandline.setup_logging('raptor', args, {'tbpl': sys.stdout})
+    LOG = get_default_logger(component='main')
+
+    # if a test name specified on command line, and it exists, just run that one
+    # otherwise run all available raptor tests that are found for this browser
+    raptor_test_list = get_raptor_test_list(args)
+    LOG.info("raptor tests scheduled to run:")
+    LOG.info(raptor_test_list)
 
     raptor = Raptor(args.app, args.binary)
+
     raptor.start_control_server()
-    raptor.run_test(args.test)
+
+    for next_test in raptor_test_list:
+        raptor.run_test(next_test)
+
     raptor.process_results()
     raptor.clean_up()
 
