@@ -13,7 +13,6 @@ import subprocess
 from threading import Event
 
 import mozcrash
-import psutil
 from mozlog import get_proxy_logger
 from mozprocess import ProcessHandler
 
@@ -25,48 +24,10 @@ class RaptorError(Exception):
     "Errors found while running the talos harness."
 
 
-class ProcessContext(object):
-    """
-    Store useful results of the browser execution.
-    """
-    def __init__(self):
-        self.output = None
-        self.process = None
-
-    @property
-    def pid(self):
-        return self.process and self.process.pid
-
-    def kill_process(self):
-        """
-        Kill the process, returning the exit code or None if the process
-        is already finished.
-        """
-        if self.process and self.process.is_running():
-            LOG.debug("Terminating %s" % self.process)
-            try:
-                self.process.terminate()
-            except psutil.NoSuchProcess:
-                procs = self.process.children()
-                for p in procs:
-                    c = ProcessContext()
-                    c.process = p
-                    c.kill_process()
-                return self.process.returncode
-            try:
-                return self.process.wait(3)
-            except psutil.TimeoutExpired:
-                self.process.kill()
-                # will raise TimeoutExpired if unable to kill
-                return self.process.wait(3)
-
-
 class Reader(object):
     def __init__(self, event):
-        self.output = []
         self.got_end_timestamp = False
         self.got_timeout = False
-        self.timeout_message = ''
         self.event = event
         self.proc = None
 
@@ -77,7 +38,6 @@ class Reader(object):
         if not (line.startswith('JavaScript error:') or
                 line.startswith('JavaScript warning:')):
             LOG.process_output(self.proc.pid, line)
-            self.output.append(line)
 
 
 def run_browser(command, minidump_dir, timeout=None, on_started=None,
@@ -99,11 +59,11 @@ def run_browser(command, minidump_dir, timeout=None, on_started=None,
                     we raise a :class:`RaptorError`
     :param on_started: a callback that can be used to do things just after
                        the browser has been started. The callback must takes
-                       an argument, which is the psutil.Process instance
+                       an argument, which is the ProcessHandler instance
     :param kwargs: additional keyword arguments for the :class:`ProcessHandler`
                    instance
 
-    Returns a ProcessContext instance, with available output and pid used.
+    Returns a mozprocess.ProcessHandler instance, with available output and pid used.
     """
 
     debugger_info = find_debugger_info(debug, debugger, debugger_args)
@@ -111,7 +71,6 @@ def run_browser(command, minidump_dir, timeout=None, on_started=None,
         return run_in_debug_mode(command, debugger_info,
                                  on_started=on_started, env=kwargs.get('env'))
 
-    context = ProcessContext()
     first_time = int(time.time()) * 1000
     wait_for_quit_timeout = 5
     event = Event()
@@ -119,7 +78,7 @@ def run_browser(command, minidump_dir, timeout=None, on_started=None,
 
     # LOG.info("Using env: %s" % pprint.pformat(kwargs['env']))
 
-    kwargs['storeOutput'] = False
+    kwargs['storeOutput'] = True
     kwargs['processOutputLine'] = reader
     kwargs['onFinish'] = event.set
     proc = ProcessHandler(command, **kwargs)
@@ -128,9 +87,6 @@ def run_browser(command, minidump_dir, timeout=None, on_started=None,
 
     LOG.process_start(proc.pid, ' '.join(command))
     try:
-        context.process = psutil.Process(proc.pid)
-        if on_started:
-            on_started(context.process)
         # wait until we saw __endTimestamp in the proc output,
         # or the browser just terminated - or we have a timeout
         if not event.wait(timeout):
@@ -148,13 +104,13 @@ def run_browser(command, minidump_dir, timeout=None, on_started=None,
                     " process.".format(wait_for_quit_timeout)
                 )
         elif reader.got_timeout:
-            raise RaptorError('TIMEOUT: %s' % reader.timeout_message)
+            raise RaptorError('Application process timed out')
     finally:
         # this also handle KeyboardInterrupt
         # ensure early the process is really terminated
         return_code = None
         try:
-            return_code = context.kill_process()
+            return_code = proc.kill()
             if return_code is None:
                 return_code = proc.wait(1)
         except Exception:
@@ -162,10 +118,10 @@ def run_browser(command, minidump_dir, timeout=None, on_started=None,
             LOG.info("Unable to kill process")
             LOG.info(traceback.format_exc())
 
-    reader.output.append(
+    proc.output.append(
         "__startBeforeLaunchTimestamp%d__endBeforeLaunchTimestamp"
         % first_time)
-    reader.output.append(
+    proc.output.append(
         "__startAfterTerminationTimestamp%d__endAfterTerminationTimestamp"
         % (int(time.time()) * 1000))
 
@@ -173,8 +129,7 @@ def run_browser(command, minidump_dir, timeout=None, on_started=None,
         LOG.process_exit(proc.pid, return_code)
     else:
         LOG.debug("Unable to detect exit code of the process %s." % proc.pid)
-    context.output = reader.output
-    return context
+    return proc
 
 
 def find_debugger_info(debug, debugger, debugger_args):
@@ -199,20 +154,18 @@ def find_debugger_info(debug, debugger, debugger_args):
 
 def run_in_debug_mode(command, debugger_info, on_started=None, env=None):
     signal.signal(signal.SIGINT, lambda sigid, frame: None)
-    context = ProcessContext()
     command_under_dbg = [debugger_info.path] + debugger_info.args + command
 
-    ttest_process = subprocess.Popen(command_under_dbg, env=env)
+    proc = subprocess.Popen(command_under_dbg, env=env)
 
-    context.process = psutil.Process(ttest_process.pid)
     if on_started:
-        on_started(context.process)
+        on_started(proc)
 
-    return_code = ttest_process.wait()
+    return_code = proc.wait()
 
     if return_code is not None:
-        LOG.process_exit(ttest_process.pid, return_code)
+        LOG.process_exit(proc.pid, return_code)
     else:
-        LOG.debug("Unable to detect exit code of the process %s." % ttest_process.pid)
+        LOG.debug("Unable to detect exit code of the process %s." % proc.pid)
 
-    return context
+    return proc
