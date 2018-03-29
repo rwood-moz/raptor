@@ -9,8 +9,8 @@ from manifestparser import TestManifest
 from mozlog import get_proxy_logger
 
 here = os.path.abspath(os.path.dirname(__file__))
-raptor_ini = os.path.join(os.path.dirname(here), 'raptor', 'raptor.ini')
-tests_dir = os.path.join(os.path.dirname(here), 'raptor', 'tests')
+raptor_ini = os.path.join(here, 'raptor.ini')
+tests_dir = os.path.join(here, 'tests')
 LOG = get_proxy_logger(component="manifest")
 
 
@@ -48,7 +48,7 @@ def write_test_settings_json(test_details):
         if "fcp" in test_details['measure']:
             test_settings['raptor-options']['measure']['fcp'] = True
         if "hero" in test_details['measure']:
-            test_settings['raptor-options']['measure']['hero'] = test_details['hero'].split(',')
+            test_settings['raptor-options']['measure']['hero'] = test_details['hero'].split()
     if test_details.get("page_timeout", None) is not None:
         test_settings['raptor-options']['page_timeout'] = int(test_details['page_timeout'])
 
