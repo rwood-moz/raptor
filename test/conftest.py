@@ -43,7 +43,7 @@ def filedir():
 @pytest.fixture
 def get_binary():
     try:
-        from moztest.selftest.fixtures import binary
+        from moztest.selftest import fixtures
     except ImportError:
         pytest.xfail(reason="A newer version of moztest is required")
 
@@ -53,4 +53,9 @@ def get_binary():
 
         # TODO Remove when this is running with |mach python-test|
         os.environ['PYTHON_TEST_TMP'] = tempfile.gettempdir()
-        return binary()
+        binary = fixtures.binary()
+        if not binary:
+            pytest.skip("could not find a {} binary".format(app))
+        return binary
+
+    return inner

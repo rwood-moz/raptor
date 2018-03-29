@@ -9,17 +9,20 @@ from __future__ import absolute_import
 import json
 import os
 import sys
+import time
 
 from mozlog import commandline, get_default_logger
 from mozprofile import create_profile
+from mozrunner import runners
 
-from raptor.browser import start_browser
 from raptor.cmdline import parse_args
 from raptor.control_server import RaptorControlServer
 from raptor.gen_test_url import gen_test_url
+from raptor.outputhandler import OutputHandler
 from raptor.webext import install_webext
 
 here = os.path.abspath(os.path.dirname(__file__))
+webext_dir = os.path.join(os.path.dirname(here), 'webext')
 
 
 class Raptor(object):
@@ -31,8 +34,8 @@ class Raptor(object):
 
         self.control_server = None
         self.app = app
-        self.binary = binary
 
+        # Create the profile
         pref_file = os.path.join(here, 'preferences', '{}.json'.format(self.app))
         prefs = {}
         if os.path.isfile(pref_file):
@@ -44,14 +47,50 @@ class Raptor(object):
         except NotImplementedError:
             self.profile = None
 
+        # Create the runner
+        cmdargs = []
+        if app == 'chrome':
+            cmdargs.append('--load-extension={}'.format(
+                           os.path.join(webext_dir, 'raptor-chrome')))
+
+        self.output_handler = OutputHandler()
+        process_args = {
+            'processOutputLine': [self.output_handler],
+        }
+        runner_cls = runners[app]
+        self.runner = runner_cls(
+            binary, cmdargs=cmdargs, profile=self.profile, process_args=process_args)
+
     def start_control_server(self):
         self.control_server = RaptorControlServer()
         self.control_server.start()
 
-    def run_test(self, test):
+    def run_test(self, test, timeout=None):
         gen_test_url(self.app, test)
         install_webext(self.app, self.profile)
-        start_browser(self.app, self.binary, self.profile)
+        self.runner.start()
+        first_time = int(time.time()) * 1000
+        proc = self.runner.process_handler
+        self.output_handler.proc = proc
+
+        try:
+            self.runner.wait(timeout)
+        finally:
+            try:
+                self.runner.check_for_crashes()
+            except NotImplementedError:  # not implemented for Chrome
+                pass
+
+        if self.runner.is_running():
+            self.log("Application timed out after {} seconds".format(timeout))
+            self.runner.stop()
+
+        proc.output.append(
+            "__startBeforeLaunchTimestamp%d__endBeforeLaunchTimestamp"
+            % first_time)
+        proc.output.append(
+            "__startAfterTerminationTimestamp%d__endAfterTerminationTimestamp"
+            % (int(time.time()) * 1000))
 
     def process_results(self):
         self.log.info('todo: process results and dump in PERFHERDER_JSON blob')
@@ -59,11 +98,7 @@ class Raptor(object):
 
     def clean_up(self):
         self.control_server.stop()
-
-        if self.profile:
-            self.log.info("deleting browser profile")
-            del self.profile
-
+        self.runner.stop()
         self.log.info("done")
 
 

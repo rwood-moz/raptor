@@ -6,8 +6,7 @@ here = os.path.dirname(os.path.abspath(__file__))
 description = 'Browser performance test framework prototype'
 version = "0.0"
 
-with open(os.path.join(here, "requirements.txt")) as f:
-    dependencies = f.read().splitlines()
+dependencies = []
 
 setup(name='raptor',
       version=version,
