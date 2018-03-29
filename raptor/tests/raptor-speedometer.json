@@ -1,7 +1,0 @@
-{
-    "raptor-options": {
-        "type": "benchmark",
-        "test_url": "http://localhost:8081/Speedometer/index.html?raptor",
-        "page_cycles": 1
-    }
-}

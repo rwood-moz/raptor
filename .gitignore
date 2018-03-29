@@ -103,6 +103,7 @@ venv.bak/
 # mypy
 .mypy_cache/
 
-# auto-generated raptor file
+# auto-generated raptor files
 /webext/raptor-firefox/auto_gen_settings_url.js
 /webext/raptor-chrome/auto_gen_settings_url.js
+/raptor/tests/raptor*.json

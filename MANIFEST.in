@@ -1,5 +1,5 @@
 include mozbase_requirements.txt
 include raptor/preferences/*.json
-include raptor/tests/*.json
+include raptor/tests/*.ini
 include requirements.txt
 include README.md
