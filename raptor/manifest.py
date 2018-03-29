@@ -16,14 +16,14 @@ LOG = get_proxy_logger(component="manifest")
 
 def filter_app(tests, values):
     for test in tests:
-      if values["app"] in test['apps']:
-        yield test
+        if values["app"] in test['apps']:
+            yield test
 
 
 def get_browser_test_list(browser_app):
     LOG.info(raptor_ini)
     test_manifest = TestManifest([raptor_ini], strict=False)
-    info = { "app": browser_app }
+    info = {"app": browser_app}
     return test_manifest.active_tests(exists=False,
                                       disabled=False,
                                       filters=[filter_app],
@@ -58,10 +58,9 @@ def write_test_settings_json(test_details):
         LOG.info("trying to write here")
         LOG.info(settings_file)
         with open(settings_file, 'w') as out_file:
-            json.dump(test_settings, out_file, indent=4,
-               ensure_ascii=False)
+            json.dump(test_settings, out_file, indent=4, ensure_ascii=False)
             out_file.close()
-    except:
+    except IOError:
         LOG.info("abort: exception writing test settings json!")
 
 
@@ -78,7 +77,7 @@ def get_raptor_test_list(args):
         else:
             LOG.info("abort: test doesn't exist!")
     else:
-      tests_to_run = available_test_names
+        tests_to_run = available_test_names
 
     # write out .json test setting files for the control server to read and send to web ext
     for test in available_tests:

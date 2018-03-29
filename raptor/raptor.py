@@ -11,7 +11,6 @@ import os
 import sys
 import time
 
-from manifestparser import TestManifest
 from mozlog import commandline, get_default_logger
 from mozprofile import create_profile
 from mozrunner import runners
