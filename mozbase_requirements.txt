@@ -7,3 +7,4 @@ vendor/mozprocess
 vendor/mozrunner
 vendor/mozinstall
 vendor/moztest
+vendor/manifestparser
