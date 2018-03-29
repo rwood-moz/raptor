@@ -52,11 +52,8 @@ def write_test_settings_json(test_details):
     if test_details.get("page_timeout", None) is not None:
         test_settings['raptor-options']['page_timeout'] = int(test_details['page_timeout'])
 
-    print test_settings
     settings_file = os.path.join(tests_dir, test_details['name'] + '.json')
     try:
-        LOG.info("trying to write here")
-        LOG.info(settings_file)
         with open(settings_file, 'w') as out_file:
             json.dump(test_settings, out_file, indent=4, ensure_ascii=False)
             out_file.close()
