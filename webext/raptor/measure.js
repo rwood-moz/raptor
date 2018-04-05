@@ -11,33 +11,53 @@ var gRetryCounter = 0;
 var getHero = false;
 var heroesToCapture = [];
 
-// measure time-to-first-non-blank-paint
+// measure firefox time-to-first-non-blank-paint
 // note: this browser pref must be enabled:
 // dom.performance.time_to_non_blank_paint.enabled = True
 // default only; this is set via control server settings json
 var getFNBPaint = false;
+
+// measure google's first-contentful-paint
+// default only; this is set via control server settings json
+var getFCP = false;
 
 // performance.timing measurement used as 'starttime'
 var startMeasure = "fetchStart";
 
 function contentHandler() {
   // retrieve test settings from local ext storage
-  browser.storage.local.get("settings").then(function(item) {
-    var settings = item['settings'];
-    getFNBPaint = settings['measure']['fnbpaint'];
-    if (settings['measure']['hero'].length !== 0) {
-      getHero = true;
-      heroesToCapture = settings['measure']['hero'];
-    }
-    if (getHero) {
-      console.log('hero elements to measure: ' + heroesToCapture);
-      measureHero();
-    }
-    if (getFNBPaint) {
-      console.log('will be measuring fnbpaint');
-      measureFNBPaint();
-    }
-  });
+  if (typeof(browser) !== "undefined") {
+    // firefox, returns promise
+    browser.storage.local.get("settings").then(function(item) {
+      setup(item['settings']);
+    });
+  } else {
+    // chrome, no promise so use callback
+    chrome.storage.local.get("settings", function(item) {
+      setup(item['settings']);
+    });
+  }
+}
+
+function setup(settings) {
+  getFNBPaint = settings['measure']['fnbpaint'];
+  getFCP = settings['measure']['fcp'];
+  if (settings['measure']['hero'].length !== 0) {
+    getHero = true;
+    heroesToCapture = settings['measure']['hero'];
+  }
+  if (getHero) {
+    console.log('hero elements to measure: ' + heroesToCapture);
+    measureHero();
+  }
+  if (getFNBPaint) {
+    console.log('will be measuring fnbpaint');
+    measureFNBPaint();
+  }
+  if (getFCP) {
+    console.log('will be measuring first-contentful-paint');
+    measureFirstContentfulPaint();
+  }
 }
 
 function measureHero() {
@@ -103,6 +123,34 @@ function measureFNBPaint() {
       window.setTimeout(measureFNBPaint, 100);
     } else {
       console.log("\nunable to get a value for fnbpaint after " + gRetryCounter + " retries\n");
+    }
+  }
+}
+
+function measureFirstContentfulPaint() {
+  // see https://developer.mozilla.org/en-US/docs/Web/API/PerformancePaintTiming
+  var resultType = 'fcp';
+  var result = 0;
+
+  let performanceEntries = perfData.getEntriesByType('paint');
+
+  if (performanceEntries.length >= 2) {
+    if (performanceEntries[1].startTime != undefined)
+      result = performanceEntries[1].startTime;
+  }
+
+  if (result > 0) {
+    console.log("got time to first-contentful-paint");
+    sendResult(resultType, result);
+    perfData.clearMarks();
+    perfData.clearMeasures();
+  } else {
+    gRetryCounter += 1;
+    if (gRetryCounter <= 10) {
+      console.log("\ntime to first-contentful-paint is not yet available (0), retry number " + gRetryCounter + "...\n");
+      window.setTimeout(measureFirstContentfulPaint, 100);
+    } else {
+      console.log("\nunable to get a value for time-to-fcp after " + gRetryCounter + " retries\n");
     }
   }
 }

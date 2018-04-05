@@ -14,7 +14,8 @@
 // to serve out the pages that we want to prototype with. Also
 // update the manifest content 'matches' accordingly
 
-
+var runningOnFirefox = true;
+var ext;
 var settingsURL = null;
 var testType;
 var pageCycles = 0;
@@ -25,13 +26,14 @@ var testTabID = 0;
 var results = {'page': '', 'measurements': {}};
 var getHero = false;
 var getFNBPaint = false;
+var getFCP = false;
 var isHeroPending = false;
 var pendingHeroes = [];
 var settings = {};
 var isFNBPaintPending = false;
+var isFCPPending = false;
 var isBenchmarkPending = false;
 var pageTimeout = 5000; // default pageload timeout
-
 
 function getTestSettings() {
   console.log("getting test settings from control server");
@@ -56,18 +58,28 @@ function getTestSettings() {
 
         if (testType == 'pageload') {
           getFNBPaint = settings['measure']['fnbpaint'];
+          getFCP = settings['measure']['fcp'];
           if (settings['measure']['hero'].length !== 0) {
             getHero = true;
           }
         }
 
         // write options to storage that our content script needs to know
-        browser.storage.local.clear().then(function() {
-          browser.storage.local.set({settings}).then(function() {
-            console.log('wrote settings to ext local storage');
-            resolve();
+        if (runningOnFirefox) {
+          ext.storage.local.clear().then(function() {
+            ext.storage.local.set({settings}).then(function() {
+              console.log('wrote settings to ext local storage');
+              resolve();
+            });
           });
-        });
+        } else {
+          ext.storage.local.clear(function() {
+            ext.storage.local.set({settings}, function() {
+              console.log('wrote settings to ext local storage');
+              resolve();
+            });
+          });
+        }
       });
     });
   });
@@ -75,12 +87,26 @@ function getTestSettings() {
 
 function getBrowserInfo() {
   return new Promise(resolve => {
-    var gettingInfo = browser.runtime.getBrowserInfo();
-    gettingInfo.then(function(bi) {
-      results['browser'] = bi.name + ' ' + bi.version + ' ' + bi.buildID;
+    if (runningOnFirefox) {
+      ext = browser;
+      var gettingInfo = browser.runtime.getBrowserInfo();
+      gettingInfo.then(function(bi) {
+        results['browser'] = bi.name + ' ' + bi.version + ' ' + bi.buildID;
+        console.log('testing on ' + results['browser']);
+        resolve();
+      });
+    } else {
+      ext = chrome;
+      var browserInfo = window.navigator.userAgent.split(' ');
+      for (x in browserInfo) {
+        if (browserInfo[x].indexOf('Chrome') > -1) {
+          results['browser'] = browserInfo[x];
+          break;
+        }
+      }
       console.log('testing on ' + results['browser']);
       resolve();
-    });
+    }
   });
 }
 
@@ -103,7 +129,7 @@ function waitForResult() {
   return new Promise(resolve => {
     function checkForResult() {
       if (testType == 'pageload') {
-        if (!isHeroPending && !isFNBPaintPending) {
+        if (!isHeroPending && !isFNBPaintPending && !isFCPPending) {
           cancelTimeoutAlarm("raptor-page-timeout");
           resolve();
         } else {
@@ -143,11 +169,13 @@ function nextCycle() {
           pendingHeroes = Array.from(settings['measure']['hero']);
         if (getFNBPaint)
           isFNBPaintPending = true;
+        if (getFCP)
+          isFCPPending = true;
       } else if (testType == 'benchmark') {
         isBenchmarkPending = true;
       }
       // reload the test page
-      browser.tabs.update(testTabID, {url:testURL}, testTabUpdated);
+      ext.tabs.update(testTabID, {url:testURL}, testTabUpdated);
     }, pageCycleDelay);
   } else {
     verifyResults();
@@ -164,19 +192,29 @@ function timeoutAlarmListener(alarm) {
 
 function setTimeoutAlarm(timeoutName, timeoutMS) {
   var timeout_when = Date.now() + timeoutMS;
-  browser.alarms.create(timeoutName, { when:timeout_when });
+  ext.alarms.create(timeoutName, { when:timeout_when });
   console.log("set " + timeoutName);
 }
 
 function cancelTimeoutAlarm(timeoutName) {
-  var clearAlarm = browser.alarms.clear(timeoutName);
-  clearAlarm.then(function(onCleared) {
-    if (onCleared) {
-      console.log("cancelled " + timeoutName);
-    } else {
-      console.error("failed to clear " + timeoutName);
-    }
-  });
+  if (runningOnFirefox) {
+    var clearAlarm = ext.alarms.clear(timeoutName);
+    clearAlarm.then(function(onCleared) {
+      if (onCleared) {
+        console.log("cancelled " + timeoutName);
+      } else {
+        console.error("failed to clear " + timeoutName);
+      }
+    });
+  } else {
+    chrome.alarms.clear(timeoutName, function(wasCleared) {
+      if (wasCleared) {
+        console.log("cancelled " + timeoutName);
+      } else {
+        console.error("failed to clear " + timeoutName);
+      }
+    });
+  }
 }
 
 function resultListener(request, sender, sendResponse) {
@@ -204,6 +242,9 @@ function resultListener(request, sender, sendResponse) {
       } else if (request.type == 'fnbpaint') {
         results['measurements']['fnbpaint'].push(request.value);
         isFNBPaintPending = false;
+      } else if (request.type == 'fcp') {
+        results['measurements']['fcp'].push(request.value);
+        isFCPPending = false;
       }
     } else if (testType == 'benchmark') {
       // benchmark results received (all results for that complete benchmark run)
@@ -257,25 +298,30 @@ function postToControlServer(msgType, msgData) {
 
 function cleanUp() {
   // close tab
-  browser.tabs.remove(testTabID);
+  ext.tabs.remove(testTabID);
   console.log("closed tab " + testTabID);
   if (testType == 'pageload') {
     // remove listeners
-    browser.runtime.onMessage.removeListener(resultListener);
-    browser.tabs.onCreated.removeListener(testTabCreated);
-    browser.alarms.onAlarm.removeListener(timeoutAlarmListener);
+    ext.runtime.onMessage.removeListener(resultListener);
+    ext.tabs.onCreated.removeListener(testTabCreated);
+    ext.alarms.onAlarm.removeListener(timeoutAlarmListener);
     console.log("pageloader test finished");
   } else if (testType == 'benchmark'){
     console.log('benchmark complete');
   }
   window.onload = null;
-  // done, dump to console to tell framework to shutdown browser
-  window.dump("\n__raptor_shutdownBrowser\n");
+  // done, dump to console to tell framework to shutdown browser; currently
+  // this only works with Firefox as google chrome doesn't support dump()
+  if (runningOnFirefox)
+    window.dump("\n__raptor_shutdownBrowser\n");
   return;
 }
 
 function runner() {
-  settingsURL = getSettingsURL();
+  config = getTestConfig();
+  settingsURL = config['test_settings_url'];
+  if (config['browser'] !== 'firefox')
+    runningOnFirefox = false
   getBrowserInfo().then(function() {
     getTestSettings().then(function() {
       if (testType == 'benchmark') {
@@ -286,13 +332,13 @@ function runner() {
         console.log("pageloader test start");
       }
       // results listener
-      browser.runtime.onMessage.addListener(resultListener);
+      ext.runtime.onMessage.addListener(resultListener);
       // tab creation listener
-      browser.tabs.onCreated.addListener(testTabCreated);
+      ext.tabs.onCreated.addListener(testTabCreated);
       // timeout alarm listener
-      browser.alarms.onAlarm.addListener(timeoutAlarmListener);
+      ext.alarms.onAlarm.addListener(timeoutAlarmListener);
       // create new empty tab, which starts the test
-      browser.tabs.create({url:"about:blank"});
+      ext.tabs.create({url:"about:blank"});
     });
   });
 }

@@ -16,7 +16,7 @@ def install_webext(browser, profile):
     addons = []
 
     if browser == 'firefox':
-        addons.append(os.path.join(webext_dir, 'raptor-firefox'))
+        addons.append(os.path.join(webext_dir, 'raptor'))
         LOG.info("Installing addons:")
         LOG.info(addons)
         profile.addon_manager.install_addons(addons=addons)
