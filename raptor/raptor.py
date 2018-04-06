@@ -17,7 +17,7 @@ from mozrunner import runners
 
 from raptor.cmdline import parse_args
 from raptor.control_server import RaptorControlServer
-from raptor.gen_test_url import gen_test_url
+from raptor.gen_test_config import gen_test_config
 from raptor.outputhandler import OutputHandler
 from raptor.manifest import get_raptor_test_list
 from raptor.webext import install_webext
@@ -52,7 +52,7 @@ class Raptor(object):
         cmdargs = []
         if app == 'chrome':
             cmdargs.append('--load-extension={}'.format(
-                           os.path.join(webext_dir, 'raptor-chrome')))
+                           os.path.join(webext_dir, 'raptor')))
 
         self.output_handler = OutputHandler()
         process_args = {
@@ -67,7 +67,7 @@ class Raptor(object):
         self.control_server.start()
 
     def run_test(self, test, timeout=None):
-        gen_test_url(self.app, test)
+        gen_test_config(self.app, test)
         install_webext(self.app, self.profile)
         self.runner.start()
         first_time = int(time.time()) * 1000

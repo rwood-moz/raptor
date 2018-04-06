@@ -1,10 +1,15 @@
 {
-  "name": "Raptor",
-  "description" : "Performance measurement framework prototype",
-  "version": "0.1",
+  "applications": {
+    "gecko": {
+      "id": "raptor@mozilla.org"
+    }
+  },
   "manifest_version": 2,
+  "name": "Raptor",
+  "version": "0.1",
+  "description": "Performance measurement framework prototype",
   "background": {
-    "scripts": ["auto_gen_settings_url.js", "runner.js"]
+    "scripts": ["auto_gen_test_config.js", "runner.js"]
   },
   "content_scripts": [
     {
