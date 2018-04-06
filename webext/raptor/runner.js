@@ -14,7 +14,7 @@
 // to serve out the pages that we want to prototype with. Also
 // update the manifest content 'matches' accordingly
 
-var runningOnFirefox = true;
+var browserName;
 var ext;
 var settingsURL = null;
 var testType;
@@ -65,7 +65,7 @@ function getTestSettings() {
         }
 
         // write options to storage that our content script needs to know
-        if (runningOnFirefox) {
+        if (browserName === 'firefox') {
           ext.storage.local.clear().then(function() {
             ext.storage.local.set({settings}).then(function() {
               console.log('wrote settings to ext local storage');
@@ -87,7 +87,7 @@ function getTestSettings() {
 
 function getBrowserInfo() {
   return new Promise(resolve => {
-    if (runningOnFirefox) {
+    if (browserName === 'firefox') {
       ext = browser;
       var gettingInfo = browser.runtime.getBrowserInfo();
       gettingInfo.then(function(bi) {
@@ -197,7 +197,7 @@ function setTimeoutAlarm(timeoutName, timeoutMS) {
 }
 
 function cancelTimeoutAlarm(timeoutName) {
-  if (runningOnFirefox) {
+  if (browserName === 'firefox') {
     var clearAlarm = ext.alarms.clear(timeoutName);
     clearAlarm.then(function(onCleared) {
       if (onCleared) {
@@ -312,7 +312,7 @@ function cleanUp() {
   window.onload = null;
   // done, dump to console to tell framework to shutdown browser; currently
   // this only works with Firefox as google chrome doesn't support dump()
-  if (runningOnFirefox)
+  if (browserName === 'firefox')
     window.dump("\n__raptor_shutdownBrowser\n");
   return;
 }
@@ -320,8 +320,7 @@ function cleanUp() {
 function runner() {
   config = getTestConfig();
   settingsURL = config['test_settings_url'];
-  if (config['browser'] !== 'firefox')
-    runningOnFirefox = false
+  browserName = config['browser']
   getBrowserInfo().then(function() {
     getTestSettings().then(function() {
       if (testType == 'benchmark') {
