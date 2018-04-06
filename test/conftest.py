@@ -11,6 +11,7 @@ here = os.path.abspath(os.path.dirname(__file__))
 vendor_dir = os.path.join(os.path.dirname(here), 'vendor')
 sys.path.insert(0, vendor_dir)
 
+
 from raptor.raptor import Raptor  # noqa: E402
 
 

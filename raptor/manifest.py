@@ -64,21 +64,23 @@ def write_test_settings_json(test_details):
 def get_raptor_test_list(args):
     # get a list of available raptor tests, for the browser we're testing on
     available_tests = get_browser_test_list(args.app)
-    available_test_names = map(lambda d: d.get('name', None), available_tests)
+    tests_to_run = []
 
     # if test name not provided on command line, run all available raptor tests for this browser;
     # if test name provided on command line, make sure it exists, and then only include that one
     if args.test is not None:
-        if args.test in available_test_names:
-            tests_to_run = [args.test]
-        else:
-            LOG.info("abort: test doesn't exist!")
+        for next_test in available_tests:
+            if next_test['name'] == args.test:
+                tests_to_run = [next_test]
+                break
+        if len(tests_to_run) == 0:
+            LOG.critical("abort: specified test doesn't exist!")
     else:
-        tests_to_run = available_test_names
+        tests_to_run = available_tests
 
     # write out .json test setting files for the control server to read and send to web ext
-    for test in available_tests:
-        if test['name'] in tests_to_run:
+    if len(tests_to_run) != 0:
+        for test in tests_to_run:
             write_test_settings_json(test)
 
     return tests_to_run
