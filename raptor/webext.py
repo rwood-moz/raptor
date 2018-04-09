@@ -19,7 +19,7 @@ def install_webext(browser, profile):
         addons.append(os.path.join(webext_dir, 'raptor'))
         LOG.info("Installing addons:")
         LOG.info(addons)
-        profile.addon_manager.install_addons(addons=addons)
+        profile.addons.install(addons=addons)
     elif browser == 'chrome':
         # not done here; for chrome just use the --load-extension cmd line opt
         pass
