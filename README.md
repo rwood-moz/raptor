@@ -9,10 +9,6 @@ Create a python virtualenv:
     virtualenv .raptor-venv
     source .raptor-venv/bin/activate
 
-Currently raptor uses its own special version of mozbase, so manually install the mozbase requirements:
-
-    pip install -r mozbase_requirements.txt
-
 Then run setup:
 
     python setup.py develop
