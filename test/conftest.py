@@ -1,12 +1,17 @@
 import json
 import os
+import sys
 import tempfile
 
 import pytest
 
-from raptor.raptor import Raptor
-
 here = os.path.abspath(os.path.dirname(__file__))
+
+# XXX Remove once this lands in mozilla-central
+vendor_dir = os.path.join(os.path.dirname(here), 'vendor')
+sys.path.insert(0, vendor_dir)
+
+from raptor.raptor import Raptor  # noqa: E402
 
 
 @pytest.fixture(scope='function')

@@ -6,7 +6,9 @@ here = os.path.dirname(os.path.abspath(__file__))
 description = 'Browser performance test framework prototype'
 version = "0.0"
 
-dependencies = []
+dependencies = [
+    'six==1.10.0'
+]
 
 setup(name='raptor',
       version=version,
