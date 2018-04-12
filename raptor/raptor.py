@@ -11,6 +11,8 @@ import os
 import sys
 import time
 
+import mozinfo
+
 from mozlog import commandline, get_default_logger
 from mozprofile import create_profile
 from mozrunner import runners
@@ -19,6 +21,7 @@ from raptor.cmdline import parse_args
 from raptor.control_server import RaptorControlServer
 from raptor.gen_test_config import gen_test_config
 from raptor.outputhandler import OutputHandler
+from raptor.playback import get_playback
 from raptor.manifest import get_raptor_test_list
 
 here = os.path.abspath(os.path.dirname(__file__))
@@ -29,21 +32,25 @@ class Raptor(object):
     """Container class for Raptor"""
 
     def __init__(self, app, binary):
+        self.config = {}
+        self.config['app'] = app
+        self.config['binary'] = binary
+        self.config['platform'] = mozinfo.os
+
         self.raptor_venv = os.path.join(os.getcwd(), 'raptor-venv')
         self.log = get_default_logger(component='raptor')
-
         self.control_server = None
-        self.app = app
+        self.playback = None
 
         # Create the profile
-        pref_file = os.path.join(here, 'preferences', '{}.json'.format(self.app))
+        pref_file = os.path.join(here, 'preferences', '{}.json'.format(self.config['app']))
         prefs = {}
         if os.path.isfile(pref_file):
             with open(pref_file, 'r') as fh:
                 prefs = json.load(fh)
 
         try:
-            self.profile = create_profile(self.app, preferences=prefs)
+            self.profile = create_profile(self.config['app'], preferences=prefs)
         except NotImplementedError:
             self.profile = None
 
@@ -61,9 +68,18 @@ class Raptor(object):
         self.control_server.start()
 
     def run_test(self, test, timeout=None):
-        gen_test_config(self.app, test)
+        self.log.info("starting raptor test: %s" % test['name'])
+        gen_test_config(self.config['app'], test['name'])
 
         self.profile.addons.install(os.path.join(webext_dir, 'raptor'))
+
+        # some tests require tools to playback the test pages
+        if test.get('playback', None) is not None:
+            self.config['playback_tool'] = test.get('playback')
+            self.log.info("test uses playback tool: %s " % self.config['playback_tool'])
+            self.playback = get_playback(self.config)
+            self.playback.start()
+
         self.runner.start()
 
         first_time = int(time.time()) * 1000
@@ -77,6 +93,9 @@ class Raptor(object):
                 self.runner.check_for_crashes()
             except NotImplementedError:  # not implemented for Chrome
                 pass
+
+        if self.playback is not None:
+            self.playback.stop()
 
         if self.runner.is_running():
             self.log("Application timed out after {} seconds".format(timeout))
@@ -96,19 +115,26 @@ class Raptor(object):
     def clean_up(self):
         self.control_server.stop()
         self.runner.stop()
-        self.log.info("done")
+        self.log.info("raptor finished")
 
 
 def main(args=sys.argv[1:]):
     args = parse_args()
     commandline.setup_logging('raptor', args, {'tbpl': sys.stdout})
-    LOG = get_default_logger(component='main')
+    LOG = get_default_logger(component='raptor-main')
 
     # if a test name specified on command line, and it exists, just run that one
     # otherwise run all available raptor tests that are found for this browser
     raptor_test_list = get_raptor_test_list(args)
+
+    # ensure we have at least one valid test to run
+    if len(raptor_test_list) == 0:
+        LOG.critical("abort: no tests found")
+        sys.exit(1)
+
     LOG.info("raptor tests scheduled to run:")
-    LOG.info(raptor_test_list)
+    for next_test in raptor_test_list:
+        LOG.info(next_test['name'])
 
     raptor = Raptor(args.app, args.binary)
 
