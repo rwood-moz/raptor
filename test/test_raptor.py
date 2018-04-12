@@ -5,7 +5,7 @@ import threading
 import time
 
 import pytest
-from mozprofile import Profile
+from mozprofile import BaseProfile
 from mozrunner.errors import RunnerNotStartedError
 
 from raptor.control_server import RaptorControlServer
@@ -17,11 +17,10 @@ def test_create_profile(options, app, get_prefs):
     options['app'] = app
     raptor = Raptor(**options)
 
+    assert isinstance(raptor.profile, BaseProfile)
     if app != 'firefox':
-        assert raptor.profile is None
         return
 
-    assert isinstance(raptor.profile, Profile)
     # This pref is set in mozprofile
     firefox_pref = 'user_pref("app.update.enabled", false);'
     # This pref is set in raptor

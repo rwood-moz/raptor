@@ -20,7 +20,6 @@ from raptor.control_server import RaptorControlServer
 from raptor.gen_test_config import gen_test_config
 from raptor.outputhandler import OutputHandler
 from raptor.manifest import get_raptor_test_list
-from raptor.webext import install_webext
 
 here = os.path.abspath(os.path.dirname(__file__))
 webext_dir = os.path.join(os.path.dirname(here), 'webext')
@@ -49,18 +48,13 @@ class Raptor(object):
             self.profile = None
 
         # Create the runner
-        cmdargs = []
-        if app == 'chrome':
-            cmdargs.append('--load-extension={}'.format(
-                           os.path.join(webext_dir, 'raptor')))
-
         self.output_handler = OutputHandler()
         process_args = {
             'processOutputLine': [self.output_handler],
         }
         runner_cls = runners[app]
         self.runner = runner_cls(
-            binary, cmdargs=cmdargs, profile=self.profile, process_args=process_args)
+            binary, profile=self.profile, process_args=process_args)
 
     def start_control_server(self):
         self.control_server = RaptorControlServer()
@@ -68,8 +62,10 @@ class Raptor(object):
 
     def run_test(self, test, timeout=None):
         gen_test_config(self.app, test)
-        install_webext(self.app, self.profile)
+
+        self.profile.addons.install(os.path.join(webext_dir, 'raptor'))
         self.runner.start()
+
         first_time = int(time.time()) * 1000
         proc = self.runner.process_handler
         self.output_handler.proc = proc
