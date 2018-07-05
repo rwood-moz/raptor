@@ -1,5 +1,7 @@
 [![Build Status](https://api.travis-ci.org/rwood-moz/raptor.svg?branch=master)](https://travis-ci.org/rwood-moz/raptor)
 
+# Note: Raptor has been moved into mozilla-central, and this repo is now obsolete
+
 # raptor
 Desktop browser performance framework prototype
 
